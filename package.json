@@ -1,0 +1,14 @@
+{
+  "name": "serra",
+  "version": "0.1.0",
+  "description": "AI-assisted tool for building interactive dashboards through natural language conversations",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "test": "jest"
+  },
+  "author": "Jean Hugues Noël Robert",
+  "license": "MIT",
+  "private": true
+}
