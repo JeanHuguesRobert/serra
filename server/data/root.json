@@ -1,0 +1,31 @@
+{
+  "id": "root",
+  "type": "system",
+  "content": {
+    "resources": {
+      "styles": {
+        "elements.theme": {
+          "id": "theme-vars",
+          "css": ":root { --primary-color: #1976d2; --background-color: #fff; --text-color: #333; }",
+          "reactive": {
+            "theme": {
+              "light": { "--primary-color": "#1976d2", "--background-color": "#fff", "--text-color": "#333" },
+              "dark": { "--primary-color": "#90caf9", "--background-color": "#121212", "--text-color": "#fff" }
+            }
+          }
+        },
+        "elements.number": {
+          "id": "number-input",
+          "css": ".number-input-container { background: var(--background-color); color: var(--text-color); } .number-input { border-color: var(--primary-color); }",
+          "dependencies": ["elements.theme"]
+        }
+      },
+      "processors": {
+        "styles": {
+          "id": "style-processor",
+          "code": "function processStyles(styles) { return styles.sort((a,b) => (a.dependencies?.length || 0) - (b.dependencies?.length || 0)).map(s => s.css).join('\\n'); }"
+        }
+      }
+    }
+  }
+}

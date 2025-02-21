@@ -1,0 +1,9 @@
+{
+  "name": "@serra/core",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  }
+}

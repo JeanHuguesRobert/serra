@@ -1,0 +1,53 @@
+{
+  "id": "first",
+  "version": "1.0.0",
+  "created": "2024-01-17T00:00:00Z",
+  "lastModified": "2024-01-17T00:00:00Z",
+  "owner": "system",
+  "title": "What If Dashboard",
+  "description": "Interactive number relationship example",
+  "type": "dashboard",
+  "content": {
+    "layout": "grid",
+    "components": [
+      {
+        "id": "element-a",
+        "type": "number-input",
+        "label": "A",
+        "value": "10",
+        "relationships": ["element-x"]
+      },
+      {
+        "id": "element-b",
+        "type": "number-input",
+        "label": "B",
+        "value": "5",
+        "relationships": ["element-x"]
+      },
+      {
+        "id": "element-x",
+        "type": "number-input",
+        "label": "X = A + B",
+        "value": "15",
+        "relationships": ["element-a", "element-b"],
+        "formula": "return a + b;"
+      }
+    ],
+    "scripts": [
+      {
+        "id": "relationship-handler",
+        "code": "const elements = {a: document.getElementById('element-a'),b: document.getElementById('element-b'),x: document.getElementById('element-x')};function updateValues(changed, newValue) {const a = parseFloat(elements.a.value) || 0;const b = parseFloat(elements.b.value) || 0;const x = parseFloat(elements.x.value) || 0;switch(changed) {case 'a':elements.x.value = a + b;break;case 'b':elements.x.value = a + b;break;case 'x':elements.a.value = x - b;break;}dashboard.content.components.forEach(comp => {if (comp.id in elements) {comp.value = elements[comp.id].value;}});socket.emit('dashboard-update', dashboard);}Object.entries(elements).forEach(([key, element]) => {element.addEventListener('change', (event) => {updateValues(key, event.target.value);});});"
+      }
+    ],
+    "styles": [
+      {
+        "id": "number-inputs-style",
+        "css": ".number-input-container {display: flex;align-items: center;margin: 10px;gap: 10px;}.number-input-container input {width: 100px;padding: 8px;font-size: 1.1em;border: 1px solid #ccc;border-radius: 4px;}.number-input-container label {min-width: 100px;font-weight: bold;}"
+      }
+    ]
+  },
+  "metadata": {
+    "tags": ["what-if", "tutorial", "math"],
+    "visibility": "public"
+  }
+}

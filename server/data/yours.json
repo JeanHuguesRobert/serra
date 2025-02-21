@@ -1,0 +1,22 @@
+{
+  "id": "yours",
+  "version": "1.0.0",
+  "created": "2024-01-17T00:00:00Z",
+  "lastModified": "2024-01-17T00:00:00Z",
+  "owner": "system",
+  "title": "Your Dashboards",
+  "description": "List of available dashboards",
+  "type": "directory",
+  "content": {
+    "dashboards": [
+      {
+        "id": "first",
+        "title": "Welcome Dashboard",
+        "description": "Your first dashboard",
+        "created": "2024-01-17T00:00:00Z",
+        "lastModified": "2024-01-17T00:00:00Z",
+        "version": "1.0.0"
+      }
+    ]
+  }
+}
