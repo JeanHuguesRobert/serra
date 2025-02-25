@@ -1,6 +1,9 @@
 export const ElementTypes = {
-  DASHBOARD: 'dashboard',
   NUMBER: 'number',
-  FORMULA: 'formula',
-  // ... other types can be added as needed
+  DISPLAY: 'display',
+  CONTAINER: 'container',
+  INPUT: 'input',
+  ALERT: 'alert',
+  SWITCH: 'switch',
+  FORMULA: 'formula'
 };

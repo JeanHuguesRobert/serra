@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('update-value', ({ id, value }) => {
-    const element = engine.getElementById(id);
+    const element = engine.getElement(id);
     if (element) {
       element.setProperty('value', value);
     }

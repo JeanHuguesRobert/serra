@@ -1,132 +1,146 @@
-import { Element } from '../Element.js';
+import { Element } from './Element.js';
 import { Subject, combineLatest } from 'rxjs';
-import { map, distinctUntilChanged } from 'rxjs/operators';
+import { map, distinctUntilChanged, debounceTime, filter } from 'rxjs/operators';
 
 export class FormulaElement extends Element {
   constructor(id) {
     super(id, 'formula');
     this.computations = new Map();
-    this.activeComputation = null;
+    this.subscriptions = [];
   }
-
-  setComputations({ forward, solveForA, solveForB, solveForX, solveForC }) {
-    // Clear any existing computations
-    this.computations.clear();
-    
-    // Set up forward computation first
-    this.setComputation('forward', forward, true);
-    
-    // Set up backward computations
-    if (solveForA) this.setComputation('solveForA', solveForA);
-    if (solveForB) this.setComputation('solveForB', solveForB);
-    if (solveForX) this.setComputation('solveForX', solveForX);
-    if (solveForC) this.setComputation('solveForC', solveForC);
+  
+  getValue() {
+    return super.getValue();
   }
-
-  setComputation(name, { inputs, output, compute }, isForward = false) {
-    console.log(`\n[${name}] Setting up computation:`, { inputs, output, compute });
-    
-    // Extract function body while preserving input parameter names
-    let functionBody;
-    if (compute.includes('=>')) {
-      const arrowMatch = compute.match(/\((.*?)\)\s*=>\s*(.*)/);
-      functionBody = arrowMatch[2].trim();
-    } else {
-      // For simple expressions, use input names directly
-      functionBody = inputs.reduce((expr, param) => {
-        const regex = new RegExp(`\\b${param.toLowerCase()}\\b`, 'g');
-        return expr.replace(regex, param);
-      }, compute);
+  
+  setValue(value) {
+    const numericValue = Number(value);
+    if (isNaN(numericValue)) {
+      return;
     }
-    console.log(`[${name}] Function body:`, functionBody);
-    
-    const fn = new Function(...inputs, `return ${functionBody}`);
-    this.computations.set(name, { inputs, output, fn });
-
-    const inputElements = inputs.map(id => {
-      const el = this.engine.getElementById(id);
-      console.log(`[${name}] Input ${id}:`, el?.id);
-      // Initialize with 0 if no value
-      if (el && el.getValue() === undefined) {
-        el.setValue(0);
-      }
-      return el;
+    super.setValue(numericValue);
+    this.value$.next(numericValue);
+  }
+  
+  setValueWithoutTrigger(value) {
+    super.setProperty('value',value);
+  }
+  
+  addComputations(computations) {
+    // Set up all computations first
+    Object.entries(computations).forEach(([name, config]) => {
+      this.ensureElements(config);
+      const effectiveOutput = config.output || name;
+      this.setupComputation(name, { ...config, output: effectiveOutput });
     });
-    const outputElement = this.engine.getElementById(output);
-    console.log(`[${name}] Output ${output}:`, outputElement?.id);
-
-    const subscription = combineLatest(inputElements.map(el => {
-      console.log(`[${name}] Setting up stream for ${el.id}`);
-      return el.value$;
-    }))
-      .pipe(
-        map(values => {
-          console.log(`[${name}] Computing with values:`, values);
-          try {
-            const result = Number(fn.apply(null, values));
-            console.log(`[${name}] Computed result:`, result);
-            return isNaN(result) ? undefined : result;
-          } catch (e) {
-            console.error(`[${name}] Computation error:`, e);
-            return undefined;
+    // Initialize all input values to trigger the computation chain
+    Object.entries(computations).forEach(([_, config]) => {
+      config.inputs.forEach(inputId => {
+        const inputElement = this.engine.getElement(inputId);
+        if (inputElement) {
+          const currentValue = inputElement.getValue();
+          if (currentValue !== undefined) {
+            inputElement.setValue(currentValue);
+          } else {
+            inputElement.setValue(0);
           }
-        }),
-        distinctUntilChanged()
-      )
-      .subscribe(value => {
-        console.log(`[${name}] New value to set:`, value);
-        if (!this.activeComputation && value !== undefined) {
-          this.activeComputation = name;
-          outputElement.setValue(value);
-          console.log(`[${name}] Set ${output} to:`, value);
-          this.activeComputation = null;
         }
       });
-
-    return subscription;
+    });
   }
-  setValue(value) {
-    const currentValue = this.getValue();
-    if (!this.activeComputation && currentValue !== value) {
-      this.activeComputation = 'backward';
-      console.log(`[${this.id}] Setting value to:`, value);
-      
-      // Get all possible input elements
-      const inputA = this.engine.getElementById('A');
-      const inputB = this.engine.getElementById('B');
-      const inputX = this.engine.getElementById('X');
-      const inputC = this.engine.getElementById('C');
-      
-      // Try backward computations based on available inputs
-      const solveForB = this.computations.get('solveForB');
-      const solveForA = this.computations.get('solveForA');
-      const solveForX = this.computations.get('solveForX');
-      const solveForC = this.computations.get('solveForC');
-      
-      if (this.id === 'Y' && solveForC && inputX) {
-        const xValue = inputX.getValue();
-        if (xValue !== undefined) {
-          const result = solveForC.fn(value, xValue);
-          if (!isNaN(result)) {
-            console.log(`[${this.id}] Backward compute C:`, result);
-            this.engine.getElementById('C').setValue(result);
+  
+  ensureElements(config) {
+    if (!config.inputs || !Array.isArray(config.inputs)) {
+      throw new Error('Invalid computation configuration: inputs must be an array');
+    }
+  
+    config.inputs.forEach(id => {
+      const element = this.engine.getElement(id);
+      if (!element) {
+        throw new Error(`Input element ${id} not found`);
+      }
+    });
+  
+    if (config.output && config.output !== this.id) {
+      const outputElement = this.engine.getElement(config.output);
+      if (!outputElement) {
+        throw new Error(`Output element ${config.output} not found`);
+      }
+    }
+  }
+  
+  setupComputation(name, { inputs, compute, output }) {
+    const computeFunction = this.createComputeFunction(compute, inputs);
+    const targetId = output || name;
+
+    const inputStreams = inputs.map(id => {
+      const element = this.engine.getElement(id);
+      if (!element || !element.value$) {
+        throw new Error(`Input element ${id} not found or not properly initialized`);
+      }
+      return element.value$.pipe(
+        map(value => Number(value)),
+        filter(value => !isNaN(value)),
+        distinctUntilChanged()
+      );
+    });
+    
+    const subscription = combineLatest(inputStreams).pipe(
+      map(values => {
+        try {
+          const result = Number(computeFunction.apply(null, values));
+          return isNaN(result) ? null : result;
+        } catch (error) {
+          console.error('Error in computation:', error);
+          return null;
+        }
+      }),
+      filter(result => result !== null),
+      distinctUntilChanged()
+    ).subscribe(result => {
+      const targetElement = this.engine.getElement(targetId);
+      if (targetElement) {
+        targetElement.setValueWithoutTrigger(result);
+        targetElement.value$.next(result);
+      }
+    });
+    this.subscriptions.push(subscription);
+  }
+  disconnect() {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.subscriptions = [];
+    // Clear all computations
+    this.computations.clear();
+  }
+  dispose() {
+    this.disconnect();
+    super.dispose();
+  }
+  createComputeFunction(compute, inputs) {
+    if (typeof compute === 'string') {
+      if (compute.startsWith('(') && compute.includes('=>')) {
+        try {
+          const fn = eval(compute);
+          if (typeof fn === 'function') {
+            return fn;
           }
-        }
-      } else if (solveForB && inputA) {
-        const result = solveForB.fn(value, aValue);
-        if (!isNaN(result)) {
-          console.log(`[${this.id}] Backward compute B:`, result);
-          this.engine.getElementById('B').setValue(result);
-        }
-      } else if (solveForA && inputB && bValue !== undefined) {
-        const result = solveForA.fn(value, bValue);
-        if (!isNaN(result)) {
-          console.log(`[${this.id}] Backward compute A:`, result);
-          this.engine.getElementById('A').setValue(result);
+        } catch (error) {
+          console.error('Error evaluating arrow function:', error);
+          return () => 0;
         }
       }
-      this.activeComputation = null;
+      try {
+        // For simple expressions, wrap them in a return statement
+        const body = compute.includes('return') ? compute : `return ${compute}`;
+        const fn = new Function(...inputs, body);
+        return fn;
+      } catch (error) {
+        console.error('Error creating function:', error);
+        return () => 0;
+      }
     }
-    super.setValue(value);
+    return compute;
   }
+
 }

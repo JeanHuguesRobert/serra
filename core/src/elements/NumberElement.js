@@ -1,4 +1,4 @@
-import { Element } from '../Element.js';
+import { Element } from './Element.js';
 import { Subject } from 'rxjs';
 
 export class NumberElement extends Element {

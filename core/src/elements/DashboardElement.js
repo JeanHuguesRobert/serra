@@ -1,5 +1,5 @@
 import { Subject } from 'rxjs';
-import { Element } from '../Element.js';
+import { Element } from './Element.js';
 
 export class DashboardElement extends Element {
   constructor(id) {

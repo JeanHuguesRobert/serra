@@ -1,118 +1,203 @@
-import { Subject } from 'rxjs';
-import { Element } from './Element.js';
-import { ElementTypes } from './types/ElementTypes.js';
-import { NumberElement } from './elements/NumberElement.js';
-import { DashboardElement } from './elements/DashboardElement.js';
-import { FormulaElement } from './elements/FormulaElement.js';
-import { ActionTypes } from './types/ActionTypes.js';
-import { State } from './models/State.js';
-import { Action } from './models/Action.js';
-import { ValidationUtils } from './utils/ValidationUtils.js';
-import { ErrorHandler } from './utils/ErrorHandler.js';
-import { map } from 'rxjs/operators';
-// Remove this line as it creates circular dependency
-// import { Engine } from './engine/Engine';
+import { BehaviorSubject, Subject, map } from 'rxjs';
+import { ModelFactory } from './factories/ModelFactory.js';
 
 export class Engine {
   constructor() {
     this.elements = new Map();
-    this.eventHandlers = new Map();
-    this.state = new State();
-    this.state$ = new Subject();
+    this.running = false;
     this.currentDashboard = null;
+    this.connections = new Map();
+    this.state$ = new BehaviorSubject({ elements: [] });
+    this.updates$ = new Subject();
+    this.modelFactory = new ModelFactory(this);
   }
-
-  setCurrentDashboard(dashboardId) {
-    this.currentDashboard = dashboardId;
+  
+  start() {
+    if (this.running) return;
+    this.running = true;
+    this.elements.forEach(element => element.start());
+    this.setupComputations();
+    this.elements.forEach(element => {
+      if (element.computations.size > 0) {
+        element.computations.forEach((computation, target) => {
+          const targetElement = this.getElement(target);
+          if (targetElement) {
+            computation.inputs.forEach(inputId => {
+              const inputElement = this.getElement(inputId);
+              if (inputElement) {
+                const value = inputElement.getValue();
+                if (value !== undefined) {
+                  this.processComputations(inputId, value);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    this.updateState();
   }
-
-  getCurrentDashboard() {
-    return this.getElementById(this.currentDashboard);
+  
+  stop() {
+    this.running = false;
+    this.elements.forEach(element => element.stop());
   }
   
   createElement(id, type) {
-    try {
-      // Simplify validation for now
-      if (!id || !type) {
-        throw new Error('Invalid element creation parameters');
-      }
-  
-      let element;
-      switch (type) {
-        case 'dashboard':
-          element = new DashboardElement(id);
-          break;
-        case 'number':
-          element = new NumberElement(id);
-          break;
-        case 'formula':
-          element = new FormulaElement(id);
-          break;
-        default:
-          element = new Element(id, type);
-      }
-  
-      element.setEngine(this);
-      this.elements.set(id, element);
+    if (!this.currentDashboard) {
+      throw new Error('No dashboard selected. Call setCurrentDashboard first.');
+    }
+    const element = this.modelFactory.createElement(this.currentDashboard, id, type);
+    if (this.running) {
+      element.start();
+      this.setupComputations();
+    }
+    this.updateState();
+    return element;
+  }
 
-      // Auto-add to current dashboard if one is set
-      if (this.currentDashboard && type !== ElementTypes.DASHBOARD) {
-        this.getCurrentDashboard().addElement(element);
-      }
+  createDashboard(id) {
+    return this.modelFactory.createDashboard(id);
+  }
 
-      this.notifyStateChange();
-      return element;
-    } catch (error) {
-      const errorInfo = ErrorHandler.handleError(error, 'createElement');
-      this.notifyStateChange({ type: 'ERROR', payload: errorInfo });
-      throw error;
+  createFormula(id) {
+    if (!this.currentDashboard) {
+      throw new Error('No dashboard selected. Call setCurrentDashboard first.');
+    }
+    return this.modelFactory.createFormula(this.currentDashboard, id);
+  }
+  
+  getElement(id) {
+    return this.elements.get(id);
+  }
+  
+  updateElement(id, property, value) {
+    const element = this.elements.get(id);
+    if (element) {
+      const oldValue = element.getProperty(property);
+      if (oldValue !== value) {
+        element.setProperty(property, value);
+        this.updates$.next({ id, property, value });
+        if (property === 'value') {
+          this.processComputations(id, value);
+        }
+        this.updateState();
+      }
     }
   }
   
-  getElementById(id) {
-    try {
-      if (!ValidationUtils.isValidId(id)) {
-        throw new Error('Invalid element ID');
-      }
-      return this.elements.get(id);
-    } catch (error) {
-      const errorInfo = ErrorHandler.handleError(error, 'getElementById');
-      this.notifyStateChange({ type: 'ERROR', payload: errorInfo });
-      throw error;
-    }
+  updateState() {
+    const state = {
+      elements: Array.from(this.elements.values()).map(element => element.toJSON())
+    };
+    this.state$.next(state);
   }
   
-  notifyStateChange(action = null) {
-    this.state.update(
-      Array.from(this.elements.values()),
-      action
+  observe(id, property) {
+    return this.updates$.pipe(
+      map(update => {
+        if (update.id === id && update.property === property) {
+          return update.value;
+        }
+        return this.getElement(id)?.getProperty(property);
+      })
     );
-    this.state$.next(this.state);
   }
-  
-  dispatch(actionType, payload) {
-    try {
-      const action = Action.create(actionType, payload);
-      const handlers = this.eventHandlers.get(action.type) || [];
-      handlers.forEach(handler => handler(action));
-      this.notifyStateChange(action);
-    } catch (error) {
-      const errorInfo = ErrorHandler.handleError(error, 'dispatch');
-      this.notifyStateChange({ type: 'ERROR', payload: errorInfo });
-      throw error;
+
+  setCurrentDashboard(id) {
+    this.currentDashboard = id;
+  }
+
+  connect(sourceId, targetId, transform) {
+    const connection = { sourceId, targetId, transform };
+    if (!this.connections.has(sourceId)) {
+      this.connections.set(sourceId, []);
     }
+    this.connections.get(sourceId).push(connection);
   }
-  
-  on(eventType, handler) {
-    try {
-      if (!this.eventHandlers.has(eventType)) {
-        this.eventHandlers.set(eventType, []);
+
+  setupComputations() {
+    this.elements.forEach(element => {
+      if (element.computations.size > 0) {
+        element.computations.forEach((computation, target) => {
+          const targetElement = this.getElement(target);
+          if (targetElement) {
+            const subscription = this.updates$.subscribe(update => {
+              if (computation.inputs.includes(update.id) && update.property === 'value') {
+                const inputs = computation.inputs.map(id => this.getElement(id)?.getValue());
+                if (inputs.every(input => input !== undefined)) {
+                  const fn = new Function(...computation.inputs, computation.compute);
+                  const result = fn(...inputs);
+                  if (targetElement.getValue() !== result) {
+                    targetElement.setValue(result);
+                  }
+                }
+              }
+            });
+            element.subscriptions.push(subscription);
+          }
+        });
       }
-      this.eventHandlers.get(eventType).push(handler);
-    } catch (error) {
-      const errorInfo = ErrorHandler.handleError(error, 'on');
-      this.notifyStateChange({ type: 'ERROR', payload: errorInfo });
-      throw error;
+    });
+  }
+
+  processComputations(id, value) {
+    const processed = new Set();
+    const queue = [id];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      this.elements.forEach(element => {
+        if (element.computations.size > 0) {
+          element.computations.forEach((computation, target) => {
+            if (computation.inputs.includes(currentId) && !processed.has(target)) {
+              const targetElement = this.getElement(target);
+              if (targetElement) {
+                const inputs = computation.inputs.map(inputId => this.getElement(inputId)?.getValue());
+                if (inputs.every(input => input !== undefined)) {
+                  const fn = new Function(...computation.inputs, computation.compute);
+                  const result = fn(...inputs);
+                  if (targetElement.getValue() !== result) {
+                    targetElement.setValue(result);
+                    processed.add(target);
+                    queue.push(target);
+                  }
+                }
+              }
+            }
+          });
+        }
+      });
     }
   }
+
+  getConnections(id) {
+    return this.connections.get(id) || [];
+  }
+
+  getCurrentDashboard() {
+    return this.currentDashboard;
+  }
+
+  getState() {
+    return this.state$.getValue();
+  } 
+
+  getStateObservable() {
+    return this.state$.asObservable();
+  }
+
+  getUpdatesObservable() {
+    return this.updates$.asObservable();
+  }
+
+  getElements() {
+    return this.elements;
+  }
+
+  getConnections() {
+    return this.connections;
+  }
+
+  
 }

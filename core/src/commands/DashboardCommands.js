@@ -24,7 +24,7 @@ export class DashboardCommands {
 
   // Dynamic code injection
   injectCode(elementId, code) {
-    const element = this.engine.getElementById(elementId);
+    const element = this.engine.getElement(elementId);
     if (element) {
       const dynamicFunction = new Function('value', 'state', code);
       element.setComputation(dynamicFunction);
@@ -33,12 +33,12 @@ export class DashboardCommands {
 
   // State querying and manipulation
   getValue(elementId) {
-    const element = this.engine.getElementById(elementId);
+    const element = this.engine.getElement(elementId);
     return element ? element.getProperty('value') : null;
   }
 
   setValue(elementId, value) {
-    const element = this.engine.getElementById(elementId);
+    const element = this.engine.getElement(elementId);
     if (element) {
       element.setProperty('value', value);
       return this.getDependencies(elementId);
@@ -52,7 +52,7 @@ export class DashboardCommands {
 
   // State observation
   observe(elementId, callback) {
-    const element = this.engine.getElementById(elementId);
+    const element = this.engine.getElement(elementId);
     if (element) {
       element.value$.subscribe(callback);
     }
