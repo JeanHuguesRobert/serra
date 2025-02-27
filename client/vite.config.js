@@ -3,14 +3,26 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  root: './',
+  base: '/',
   server: {
     port: 3000,
     proxy: {
-      '/api': 'http://localhost:5000',
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      },
       '/socket.io': {
         target: 'http://localhost:5000',
-        ws: true
+        ws: true,
+        changeOrigin: true,
+        secure: false
       }
+    },
+    fs: {
+      strict: false,
+      allow: ['../']
     }
   },
   resolve: {
@@ -20,5 +32,10 @@ export default defineConfig({
     loader: 'jsx',
     include: /src\/.*\.jsx?$/,
     exclude: []
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true
   }
 });

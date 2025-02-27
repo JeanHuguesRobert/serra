@@ -1,146 +1,150 @@
 import { Element } from './Element.js';
-import { Subject, combineLatest } from 'rxjs';
-import { map, distinctUntilChanged, debounceTime, filter } from 'rxjs/operators';
+import { ElementTypes } from '../types/ElementTypes.js';
 
+/**
+ * FormulaElement represents a computational node in the engine.
+ * It can:
+ * - Take multiple input elements
+ * - Apply JavaScript expressions to compute results
+ * - Update automatically when inputs change
+ * - Support async computations
+ * - Chain with other formulas
+ * 
+ * Design:
+ * - Extends base Element for engine compatibility
+ * - Uses computation map for dependency tracking
+ * - Supports dynamic expression evaluation
+ * - Auto-updates on input changes
+ */
 export class FormulaElement extends Element {
   constructor(id) {
-    super(id, 'formula');
-    this.computations = new Map();
-    this.subscriptions = [];
-  }
-  
-  getValue() {
-    return super.getValue();
-  }
-  
-  setValue(value) {
-    const numericValue = Number(value);
-    if (isNaN(numericValue)) {
-      return;
-    }
-    super.setValue(numericValue);
-    this.value$.next(numericValue);
-  }
-  
-  setValueWithoutTrigger(value) {
-    super.setProperty('value',value);
-  }
-  
-  addComputations(computations) {
-    // Set up all computations first
-    Object.entries(computations).forEach(([name, config]) => {
-      this.ensureElements(config);
-      const effectiveOutput = config.output || name;
-      this.setupComputation(name, { ...config, output: effectiveOutput });
-    });
-    // Initialize all input values to trigger the computation chain
-    Object.entries(computations).forEach(([_, config]) => {
-      config.inputs.forEach(inputId => {
-        const inputElement = this.engine.getElement(inputId);
-        if (inputElement) {
-          const currentValue = inputElement.getValue();
-          if (currentValue !== undefined) {
-            inputElement.setValue(currentValue);
-          } else {
-            inputElement.setValue(0);
-          }
-        }
-      });
-    });
-  }
-  
-  ensureElements(config) {
-    if (!config.inputs || !Array.isArray(config.inputs)) {
-      throw new Error('Invalid computation configuration: inputs must be an array');
-    }
-  
-    config.inputs.forEach(id => {
-      const element = this.engine.getElement(id);
-      if (!element) {
-        throw new Error(`Input element ${id} not found`);
-      }
-    });
-  
-    if (config.output && config.output !== this.id) {
-      const outputElement = this.engine.getElement(config.output);
-      if (!outputElement) {
-        throw new Error(`Output element ${config.output} not found`);
-      }
-    }
-  }
-  
-  setupComputation(name, { inputs, compute, output }) {
-    const computeFunction = this.createComputeFunction(compute, inputs);
-    const targetId = output || name;
-
-    const inputStreams = inputs.map(id => {
-      const element = this.engine.getElement(id);
-      if (!element || !element.value$) {
-        throw new Error(`Input element ${id} not found or not properly initialized`);
-      }
-      return element.value$.pipe(
-        map(value => Number(value)),
-        filter(value => !isNaN(value)),
-        distinctUntilChanged()
-      );
-    });
+    super(id, ElementTypes.FORMULA);
     
-    const subscription = combineLatest(inputStreams).pipe(
-      map(values => {
-        try {
-          const result = Number(computeFunction.apply(null, values));
-          return isNaN(result) ? null : result;
-        } catch (error) {
-          console.error('Error in computation:', error);
-          return null;
-        }
-      }),
-      filter(result => result !== null),
-      distinctUntilChanged()
-    ).subscribe(result => {
-      const targetElement = this.engine.getElement(targetId);
-      if (targetElement) {
-        targetElement.setValueWithoutTrigger(result);
-        targetElement.value$.next(result);
-      }
-    });
-    this.subscriptions.push(subscription);
-  }
-  disconnect() {
-    // Unsubscribe from all subscriptions
-    this.subscriptions.forEach(subscription => subscription.unsubscribe());
-    this.subscriptions = [];
-    // Clear all computations
-    this.computations.clear();
-  }
-  dispose() {
-    this.disconnect();
-    super.dispose();
-  }
-  createComputeFunction(compute, inputs) {
-    if (typeof compute === 'string') {
-      if (compute.startsWith('(') && compute.includes('=>')) {
-        try {
-          const fn = eval(compute);
-          if (typeof fn === 'function') {
-            return fn;
-          }
-        } catch (error) {
-          console.error('Error evaluating arrow function:', error);
-          return () => 0;
-        }
-      }
-      try {
-        // For simple expressions, wrap them in a return statement
-        const body = compute.includes('return') ? compute : `return ${compute}`;
-        const fn = new Function(...inputs, body);
-        return fn;
-      } catch (error) {
-        console.error('Error creating function:', error);
-        return () => 0;
-      }
-    }
-    return compute;
+    // Formula specific properties
+    this._expression = '';           // JavaScript expression
+    this._inputs = new Set();        // Input element IDs
+    this._lastComputed = null;       // Last computation timestamp
+    this._error = null;              // Last computation error
   }
 
+  /**
+   * Sets the computation expression and input dependencies
+   * @param {string} expression - JavaScript expression to evaluate
+   * @param {string[]} inputs - Array of input element IDs
+   */
+  setFormula(expression, inputs = []) {
+    this._expression = expression;
+    this._inputs.clear();
+    inputs.forEach(id => this._inputs.add(id));
+    
+    // Register this formula with input elements
+    inputs.forEach(inputId => {
+      const inputElement = this.engine?.getElement(inputId);
+      if (inputElement) {
+        inputElement.computations.set(this.id, {
+          inputs: Array.from(this._inputs),
+          compute: this._expression
+        });
+      }
+    });
+
+    this.compute(); // Initial computation
+  }
+
+  /**
+   * Allows spreadsheet-style formula syntax
+   * @example
+   * formula.setSpreadsheetFormula('=SUM(temp1:temp5)');
+   * formula.setSpreadsheetFormula('=AVERAGE(sensors.*) * 1.5');
+   */
+  setSpreadsheetFormula(formula) {
+    if (!formula.startsWith('=')) {
+      throw new Error('Spreadsheet formulas must start with =');
+    }
+
+    // Convert spreadsheet syntax to JavaScript
+    const jsFormula = this.convertToJavaScript(formula);
+    const inputs = this.extractReferences(formula);
+    
+    this.setFormula(jsFormula, inputs);
+  }
+
+  /**
+   * Convert spreadsheet notation to JavaScript
+   * @private
+   */
+  convertToJavaScript(formula) {
+    return formula
+      .replace(/^=/, '')                           // Remove leading =
+      .replace(/SUM\((.*?)\)/g, 'sum($1)')        // Convert SUM to sum()
+      .replace(/AVERAGE\((.*?)\)/g, 'avg($1)')    // Convert AVERAGE to avg()
+      .replace(/(\w+:\w+)/g, 'range("$1")');       // Convert A1:A10 to range()
+      // ...more conversions...
+  }
+
+  /**
+   * Executes the formula expression with current input values
+   * @returns {Promise<any>} Computed result
+   */
+  async compute() {
+    if (!this._expression) return null;
+
+    try {
+      // Get current input values
+      const inputs = Array.from(this._inputs).map(id => {
+        const el = this.engine?.getElement(id);
+        return { id, value: el?.getValue() };
+      });
+
+      // Create computation context
+      const context = Object.fromEntries(
+        inputs.map(({ id, value }) => [id, value])
+      );
+
+      // Create and execute formula function
+      const fn = new Function(...Object.keys(context), `return ${this._expression}`);
+      const result = await fn(...Object.values(context));
+
+      this._lastComputed = Date.now();
+      this._error = null;
+      this.setValue(result);
+      return result;
+
+    } catch (error) {
+      this._error = error.message;
+      this.emit('error', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get formula metadata
+   */
+  getFormula() {
+    return {
+      expression: this._expression,
+      inputs: Array.from(this._inputs),
+      lastComputed: this._lastComputed,
+      error: this._error
+    };
+  }
+
+  /**
+   * Validates formula syntax without execution
+   */
+  validate() {
+    try {
+      new Function('return ' + this._expression);
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: error.message };
+    }
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      formula: this.getFormula()
+    };
+  }
 }

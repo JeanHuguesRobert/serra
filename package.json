@@ -1,12 +1,13 @@
 {
-  "name": "serra",
-  "version": "0.1.0",
+  "name": "serra-server",
+  "version": "1.0.0",
   "description": "AI-assisted tool for building interactive dashboards through natural language conversations",
   "type": "module",
   "main": "index.js",
+  "workspaces": ["core", "server", "client"],
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
+    "start": "node server/src/index.js",
+    "dev": "nodemon core/src/index.js",
     "test": "jest"
   },
   "dependencies": {

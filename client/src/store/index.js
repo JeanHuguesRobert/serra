@@ -1,9 +1,18 @@
 import { configureStore } from '@reduxjs/toolkit';
+import dashboardReducer from './dashboardSlice';
+import chatReducer from './chatSlice';
 
 export const store = configureStore({
   reducer: {
-    // Add reducers here
-  }
+    dashboard: dashboardReducer,
+    chat: chatReducer
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false
+    })
 });
 
-window.store = store;
+if (process.env.NODE_ENV === 'development') {
+  window.store = store;
+}

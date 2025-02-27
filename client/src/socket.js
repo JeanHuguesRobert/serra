@@ -1,6 +1,9 @@
 import { io } from 'socket.io-client';
 
-export const socket = io('http://localhost:5000', {
+const SOCKET_URL = 'http://localhost:5000';
+
+export const socket = io(SOCKET_URL, {
+  transports: ['websocket', 'polling'],
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -8,13 +11,15 @@ export const socket = io('http://localhost:5000', {
 });
 
 socket.on('connect', () => {
-  console.log('Connected to server');
-});
-
-socket.on('connect_error', (error) => {
-  console.error('Connection error:', error);
+  console.log('Socket connected:', socket.id);
 });
 
 socket.on('disconnect', () => {
-  console.log('Disconnected from server');
+  console.log('Socket disconnected');
 });
+
+socket.on('error', (error) => {
+  console.error('Socket error:', error);
+});
+
+export default socket;

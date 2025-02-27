@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, TextField, Box, Button, Switch, Alert } from '@mui/material';
-import { ElementTypes } from '@serra/core';
 
 const DashboardElements = ({ engine }) => {
   const [elements, setElements] = useState([]);
 
   useEffect(() => {
-    const subscription = engine.state$.subscribe(state => {
+    if (!engine) return;
+    
+    const subscription = engine.getStateObservable().subscribe(state => {
       setElements(state.elements || []);
     });
 
@@ -14,22 +15,19 @@ const DashboardElements = ({ engine }) => {
   }, [engine]);
 
   const handleInputChange = (elementId, value) => {
-    engine.dispatch({
-      type: 'UPDATE_VALUE',
-      payload: { id: elementId, value }
-    });
+    engine.updateElement(elementId, 'value', value);
   };
 
   const renderElement = (element) => {
     switch (element.type) {
-      case ElementTypes.NUMBER:
+      case 'number':
         return (
           <Box key={element.id} sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">{element.properties.label}</Typography>
+            <Typography variant="subtitle1">{element.properties?.label || element.id}</Typography>
             <TextField
               type="number"
-              value={element.properties.value || ''}
-              onChange={(e) => handleInputChange(element.id, e.target.value)}
+              value={element.value || ''}
+              onChange={(e) => handleInputChange(element.id, parseFloat(e.target.value))}
               variant="outlined"
               size="small"
               fullWidth
@@ -37,79 +35,67 @@ const DashboardElements = ({ engine }) => {
           </Box>
         );
 
-      case ElementTypes.DISPLAY:
+      case 'formula':
         return (
           <Box key={element.id} sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">{element.properties.label}</Typography>
-            <Typography>{element.properties.value}</Typography>
+            <Typography variant="subtitle1">{element.properties?.label || element.id}</Typography>
+            <Typography>{element.value}</Typography>
           </Box>
         );
 
-      case ElementTypes.INPUT:
+      case 'display':
         return (
           <Box key={element.id} sx={{ mb: 2 }}>
-            <TextField
-              label={element.properties.label}
-              value={element.properties.value || ''}
-              onChange={(e) => handleInputChange(element.id, e.target.value)}
-              variant="outlined"
-              fullWidth
-            />
+            <Typography variant="subtitle1">{element.properties?.label || element.id}</Typography>
+            <Typography>{element.value}</Typography>
           </Box>
         );
 
-      case ElementTypes.CONTAINER:
-        return (
-          <Box 
-            key={element.id}
-            sx={{ 
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2
-            }}
-          >
-            {element.children?.map(renderElement)}
-          </Box>
-        );
-
-      case ElementTypes.BUTTON:
+      case 'button':
         return (
           <Box key={element.id} sx={{ mb: 2 }}>
             <Button
-              variant={element.properties.variant || 'contained'}
-              color={element.properties.color || 'primary'}
-              onClick={() => engine.dispatch({
-                type: 'TRIGGER_ACTION',
-                payload: { id: element.id, action: element.properties.action }
-              })}
+              variant={element.properties?.variant || 'contained'}
+              color={element.properties?.color || 'primary'}
+              onClick={() => {
+                if (element.properties?.action) {
+                  engine.updateElement(element.id, 'clicked', true);
+                }
+              }}
             >
-              {element.properties.label}
+              {element.properties?.label || element.id}
             </Button>
           </Box>
         );
 
-      case ElementTypes.SWITCH:
+      case 'switch':
         return (
           <Box key={element.id} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-            <Typography>{element.properties.label}</Typography>
+            <Typography>{element.properties?.label || element.id}</Typography>
             <Switch
-              checked={element.properties.value || false}
+              checked={Boolean(element.value)}
               onChange={(e) => handleInputChange(element.id, e.target.checked)}
             />
           </Box>
         );
 
-      case ElementTypes.ALERT:
+      case 'alert':
         return (
           <Box key={element.id} sx={{ mb: 2 }}>
-            <Alert severity={element.properties.severity || 'info'}>
-              {element.properties.message}
+            <Alert severity={element.properties?.severity || 'info'}>
+              {element.properties?.message || 'Alert message'}
             </Alert>
           </Box>
         );
 
       default:
-        return null;
+        return (
+          <Box key={element.id} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2">Unknown element type: {element.type}</Typography>
+            <Typography variant="body2">ID: {element.id}</Typography>
+            <Typography variant="body2">Value: {element.value}</Typography>
+          </Box>
+        );
     }
   };
 

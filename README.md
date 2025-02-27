@@ -96,11 +96,21 @@ Serra easily integrates with:
 - IoT platforms
 - Custom data sources
 
+## Documentation
+
+Detailed documentation is available in the following sections:
+
+- [API Documentation](docs/API.md) - Comprehensive API reference
+- [Architecture Guide](docs/ARCHITECTURE.md) - System architecture and design
+- [CLI Reference](docs/CLI.md) - Command-line interface documentation
+- [Elements Guide](docs/ELEMENTS.md) - Available dashboard elements
+- [Formula System](docs/FORMULA.md) - Formula computation system
+
 ## Community and Support
 
-- [Documentation Wiki](https://github.com/yourusername/serra/wiki)
-- [Example Gallery](https://github.com/yourusername/serra/examples)
-- [Community Forums](https://github.com/yourusername/serra/discussions)
+- [Documentation Wiki](https://github.com/jeanhuguesrobert/serra/wiki)
+- [Example Gallery](https://github.com/jeanhuguesrobert/serra/examples)
+- [Community Forums](https://github.com/jeanhuguesrobert/serra/discussions)
 - Professional support available
 
 ## License

@@ -1,15 +1,24 @@
 import React from 'react';
 import { Typography, Button } from '@mui/material';
-import { socket } from '../socket';
 import { useDashboard } from '../contexts/DashboardContext';
 import Dashboard from './Dashboard';
 import { ElementService } from '../services/ElementService';
+import { useEngine, useRenderElement } from '../contexts/EngineContext';
 
 function ElementRenderer({ element, dashboardId }) {
   const { pushDashboard } = useDashboard();
+  const { engine, isReady } = useEngine();
+  const renderElement = useRenderElement();
 
   if (!ElementService.validateElement(element)) {
     return null;
+  }
+
+  if (isReady && engine) {
+    const engineElement = engine.getElement(element.id);
+    if (engineElement) {
+      return renderElement(engineElement, { dashboardId });
+    }
   }
 
   switch (element.type) {
@@ -30,5 +39,9 @@ function ElementRenderer({ element, dashboardId }) {
         </div>
       );
     // ... rest of the element rendering cases
+    default:
+      return null;
   }
 }
+
+export default ElementRenderer;

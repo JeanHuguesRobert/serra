@@ -1,32 +1,37 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDashboard } from '../store/dashboardSlice';
-import { socket } from '../socket';
+import DashboardService from '../services/DashboardService';
 import Dashboard from './Dashboard';
 
 function DashboardManager({ initialDashboard }) {
   const dispatch = useDispatch();
   const currentDashboard = useSelector(state => state.dashboard.current);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (initialDashboard) {
       dispatch(setDashboard(initialDashboard));
+      setIsInitialized(true);
     }
   }, [initialDashboard, dispatch]);
 
   useEffect(() => {
-    const handleDashboardRefresh = (data) => {
-      if (currentDashboard?.id === data.id) return;
+    const unsubscribe = DashboardService.subscribe((event, data) => {
       dispatch(setDashboard(data));
-    };
+      if (event === 'response') {
+        setIsInitialized(true);
+      }
+    });
 
-    socket.on('dashboard-refresh', handleDashboardRefresh);
-    if (!initialDashboard) {
-      socket.emit('request-dashboard');
+    if (!isInitialized) {
+      DashboardService.requestDashboard('first');
     }
 
-    return () => socket.off('dashboard-refresh', handleDashboardRefresh);
-  }, [dispatch, initialDashboard, currentDashboard?.id]);
+    return () => {
+      unsubscribe();
+    };
+  }, [dispatch, isInitialized, currentDashboard?.id]);
 
   return <Dashboard dashboard={currentDashboard} />;
 }

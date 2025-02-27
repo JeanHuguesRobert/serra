@@ -12,31 +12,30 @@
     "components": [
       {
         "id": "element-a",
-        "type": "number-input",
-        "label": "A",
-        "value": "10",
-        "relationships": ["element-x"]
+        "type": "number",
+        "value": "0",
+        "title": "A",
+        "style": "number-inputs-style"
       },
       {
         "id": "element-b",
-        "type": "number-input",
-        "label": "B",
-        "value": "5",
-        "relationships": ["element-x"]
+        "type": "number",
+        "value": "0",
+        "title": "B",
+        "style": "number-inputs-style"
       },
       {
         "id": "element-x",
-        "type": "number-input",
-        "label": "X = A + B",
-        "value": "15",
-        "relationships": ["element-a", "element-b"],
-        "formula": "return a + b;"
-      }
-    ],
-    "scripts": [
+        "type": "number",
+        "value": "0",
+        "title": "X",
+        "style": "number-inputs-style"
+      },
       {
-        "id": "relationship-handler",
-        "code": "const elements = {a: document.getElementById('element-a'),b: document.getElementById('element-b'),x: document.getElementById('element-x')};function updateValues(changed, newValue) {const a = parseFloat(elements.a.value) || 0;const b = parseFloat(elements.b.value) || 0;const x = parseFloat(elements.x.value) || 0;switch(changed) {case 'a':elements.x.value = a + b;break;case 'b':elements.x.value = a + b;break;case 'x':elements.a.value = x - b;break;}dashboard.content.components.forEach(comp => {if (comp.id in elements) {comp.value = elements[comp.id].value;}});socket.emit('dashboard-update', dashboard);}Object.entries(elements).forEach(([key, element]) => {element.addEventListener('change', (event) => {updateValues(key, event.target.value);});});"
+        "id": "X=A+B",
+        "type": "formula",
+        "inputs": [ "element-a", "element-b" ],
+        "compute": {}
       }
     ],
     "styles": [

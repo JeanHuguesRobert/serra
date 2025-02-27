@@ -1,110 +1,109 @@
-import React, { useState, useEffect } from 'react';
-import { Paper, Typography, Box, Divider, CircularProgress } from '@mui/material';
-import Dashboard from './Dashboard';
+import React, { useEffect, useState, useRef } from 'react';
+import { Paper, Typography, Box, Divider, CircularProgress, List, ListItem, IconButton, Collapse } from '@mui/material';
+import { Visibility as VisibilityIcon, VisibilityOff as VisibilityOffIcon } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
+import { Link as RouterLink } from 'react-router-dom';
 import { socket } from '../socket';
 import { useDashboard } from '../contexts/DashboardContext';
-import { DocumentationService } from '../services/DocumentationService';
-import { SocketService } from '../services/SocketService';
-import { Box, Typography, List, ListItem, Divider } from '@mui/material';
-import { Typography, Box, List, ListItem, Divider } from '@mui/material';
-import { Typography, Box, List, ListItem, Divider } from '@mui/material';
-import { Typography, Box, List, ListItem, Divider } from '@mui/material';
-import { Typography, Box, List, ListItem, Divider } from '@mui/material';
+import { LoadingWrapper } from './common/LoadingWrapper';
+import { useLoading } from '../hooks/useLoading';
+import PageContainer from './layout/PageContainer';
 
-// Rename the constant to DOCUMENTATION_CONCEPTS to avoid conflict
-const DOCUMENTATION_CONCEPTS = {
-  elements: {
-    title: 'Elements',
-    description: 'Building blocks of Serra dashboards:',
-    items: [
-      {
-        name: 'Dashboard',
-        description: 'A container that can hold other elements and scripts'
-      },
-      {
-        name: 'Display',
-        description: 'Shows values and can be updated dynamically'
-      },
-      {
-        name: 'Number',
-        description: 'Displays numerical values with optional formatting and units'
-      },
-      {
-        name: 'Dashboard Link',
-        description: 'Navigation element to load other dashboards'
-      }
-    ]
-  },
-  scripts: {
-    title: 'Scripts',
-    description: 'Dynamic behaviors and interactions:',
-    items: [
-      {
-        name: 'Element Access',
-        description: 'Scripts can access elements by their IDs'
-      },
-      {
-        name: 'Socket Communication',
-        description: 'Real-time updates through WebSocket'
-      }
-    ]
-  }
-};
+function Documentation({ filename = 'README.md' }) {
+  const { isLoading, startLoading, stopLoading } = useLoading('documentation');
+  const [content, setContent] = useState('');
+  const [error, setError] = useState(null);
+  const [navigationStack, setNavigationStack] = useState([{ file: filename, content: '' }]);
+  const fetchingRef = useRef(false);
+  const etagRef = useRef('none');
 
-function Documentation() {
-  const { current: docDashboard } = useDashboard();
-  const concepts = DocumentationService.getConcepts();
+  const currentDoc = navigationStack[navigationStack.length - 1]?.content || '';
+
+  const handleBack = () => {
+    if (navigationStack.length > 1) {
+      setNavigationStack(prev => prev.slice(0, -1));
+    }
+  };
+
+  const handleLinkClick = (e) => {
+    if (e.target.tagName === 'A') {
+      e.preventDefault();
+      const href = e.target.getAttribute('href');
+      if (href && href.endsWith('.md')) {
+        // Remove 'docs/' prefix if it exists in the link
+        const cleanPath = href.replace(/^docs\//, '');
+        loadDocument(cleanPath);
+        setNavigationStack(prev => [...prev, { file: cleanPath, content: '' }]);
+      }
+    }
+  };
+
+  const loadDocument = async (docFile) => {
+    if (fetchingRef.current) return;
+    
+    try {
+      fetchingRef.current = true;
+      startLoading();
+      
+      // Remove any leading 'docs/' from the path
+      const cleanPath = docFile.replace(/^docs\//, '');
+      console.log('[Documentation] Loading document:', cleanPath);
+      
+      const response = await fetch(`/api/docs/${cleanPath}`);
+      console.log('[Documentation] Response headers:', Object.fromEntries(response.headers));
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const markdown = await response.text();
+      // Update navigation stack with raw markdown
+      setNavigationStack(prev => prev.map((item, idx) => 
+        idx === prev.length - 1 ? { ...item, content: markdown } : item
+      ));
+      
+      setError(null);
+      console.log('[Documentation] Document loaded successfully');
+    } catch (err) {
+      console.error('[Documentation] Error loading document:', err);
+      setError(err.message);
+    } finally {
+      stopLoading();
+      fetchingRef.current = false;
+    }
+  };
 
   useEffect(() => {
-    SocketService.requestDashboard(socket, 'documentation');
-  }, []);
+    loadDocument(filename);
+  }, [filename]);
 
-  const renderConcepts = () => (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h5" gutterBottom>Concepts</Typography>
-      {Object.entries(concepts).map(([key, section]) => (
-        <Box key={key} sx={{ mb: 2 }}>
-          <Typography variant="h6">{section.title}</Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {section.description}
-          </Typography>
-          {section.items.map((item, index) => (
-            <Box key={index} sx={{ ml: 2, mb: 1 }}>
-              <Typography variant="subtitle2">{item.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {item.description}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      ))}
-    </Box>
-  );
+  if (error) {
+    return <div className="error">Error loading documentation: {error}</div>;
+  }
+
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>Documentation</Typography>
-      {Object.entries(DOCUMENTATION_CONCEPTS).map(([key, section]) => (
-        <Box key={key} sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>{section.title}</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {section.description}
-          </Typography>
-          <List dense>
-            {section.items.map((item, index) => (
-              <ListItem key={index}>
-                <Box>
-                  <Typography variant="subtitle2">{item.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.description}
-                  </Typography>
-                </Box>
-              </ListItem>
-            ))}
-          </List>
-          {key !== Object.keys(DOCUMENTATION_CONCEPTS).slice(-1)[0] && <Divider sx={{ my: 2 }} />}
+    <PageContainer>
+      {navigationStack.length > 1 && (
+        <Box sx={{ mb: 2 }}>
+          <IconButton onClick={handleBack} size="small">
+            ← Back
+          </IconButton>
         </Box>
-      ))}
-    </Box>
+      )}
+      <LoadingWrapper loading={isLoading}>
+        <Box onClick={handleLinkClick}>
+          <ReactMarkdown
+            components={{
+              a: ({ node, ...props }) => (
+                <a {...props} style={{ color: '#1976d2', textDecoration: 'none' }} />
+              )
+            }}
+          >
+            {currentDoc}
+          </ReactMarkdown>
+        </Box>
+      </LoadingWrapper>
+    </PageContainer>
   );
 }
 

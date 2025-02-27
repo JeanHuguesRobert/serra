@@ -1,6 +1,7 @@
 import { ElementModel } from '../models/ElementModel.js';
 import { FormulaElement } from '../elements/FormulaElement.js';
 import { Element } from '../elements/Element.js';
+import { LedElement } from '../elements/LedElement.js';
 
 export class ModelFactory {
   constructor(engine) {
@@ -22,8 +23,24 @@ export class ModelFactory {
       throw new Error(`Dashboard ${dashboardId} not found`);
     }
 
-    const element = new Element(id, type);
-    element.setEngine(this.engine);
+    if (!type) {
+      throw new Error('Element type is required');
+    }
+
+    let element;
+    switch (type) {
+      case 'led':
+        element = new LedElement(id);
+        break;
+      case 'number':
+        element = new NumberElement(id);
+        break;
+      // ...other element types...
+      default:
+        // Create basic element if no specific type
+        element = new Element(id, type);
+    }
+
     this.engine.elements.set(id, element);
     dashboard.addElement(element);
     return element;

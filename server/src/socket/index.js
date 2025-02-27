@@ -1,26 +1,58 @@
-const handleChat = require('./chatHandler');
+import handleChat from './chatHandler.js';
+import { SOCKET_EVENTS } from '../../../core/src/constants/events.js';
+import { AIService } from '../services/aiService.js';
 
 const setupSocket = (io) => {
-  console.log('Setting up socket server...');
+  const ai = new AIService();
+  // Track active clients and their states
+  const clients = new Map();
 
   io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
-    
-    // Initialize chat handler
-    handleChat(io, socket);
+    console.log('[Socket] Client connected:', socket.id);
+
+    // Store client info
+    clients.set(socket.id, {
+      connected: Date.now(),
+      engineState: null
+    });
+
+    // Send welcome message
+    socket.emit(SOCKET_EVENTS.CHAT.WELCOME, { 
+      message: 'Welcome to Serra!' 
+    });
+
+    // Handle engine state updates from client
+    socket.on(SOCKET_EVENTS.ENGINE.STATE, (state) => {
+      const client = clients.get(socket.id);
+      if (client) {
+        client.engineState = state;
+      }
+    });
+
+    // Handle chat messages with AI service
+    socket.on(SOCKET_EVENTS.CHAT.MESSAGE, async (msg) => {
+      console.log('[Chat] Message received:', msg);
+      
+      try {
+        const response = await ai.processMessage(msg.text, socket);
+        socket.emit(SOCKET_EVENTS.CHAT.RESPONSE, {
+          text: response,
+          type: 'ai'
+        });
+      } catch (error) {
+        console.error('[Chat] Error processing message:', error);
+        socket.emit(SOCKET_EVENTS.CHAT.RESPONSE, {
+          text: 'Thinking...',
+          type: 'ai'
+        });
+      }
+    });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      console.log('[Socket] Client disconnected:', socket.id);
+      clients.delete(socket.id);
     });
-
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
-  });
-
-  io.on('connect_error', (error) => {
-    console.error('Connection error:', error);
   });
 };
 
-module.exports = setupSocket;
+export default setupSocket;
