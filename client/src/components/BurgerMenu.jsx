@@ -1,63 +1,37 @@
 import React from 'react';
 import { Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StopIcon from '@mui/icons-material/Stop';
 import SaveIcon from '@mui/icons-material/Save';
-import { useDispatch } from 'react-redux';
-import { socket } from '../socket';
+import ListIcon from '@mui/icons-material/List';
 
-function BurgerMenu({ anchorEl, onClose }) {
-  const dispatch = useDispatch();
-
-  const handleCreateDashboard = () => {
-    socket.emit('create-dashboard');
+const BurgerMenu = ({ anchorEl, onClose, onSendMessage }) => {
+  const handleCommand = (command) => {
+    onSendMessage({ text: command, type: 'user' });
     onClose();
   };
 
-  const handleOpenDashboard = () => {
-    socket.emit('open-dashboard');
-    onClose();
-  };
-
-  const handleSaveDashboard = () => {
-    socket.emit('save-dashboard');
-    onClose();
-  };
+  const commands = [
+    { text: '/start', icon: <PlayArrowIcon />, label: 'Start Engine' },
+    { text: '/stop', icon: <StopIcon />, label: 'Stop Engine' },
+    { text: '/ls', icon: <ListIcon />, label: 'List Elements' },
+    { text: '/save', icon: <SaveIcon />, label: 'Save Dashboard' },
+  ];
 
   return (
     <Menu
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={onClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'left',
-      }}
     >
-      <MenuItem onClick={handleCreateDashboard}>
-        <ListItemIcon>
-          <AddIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>New Dashboard</ListItemText>
-      </MenuItem>
-      <MenuItem onClick={handleOpenDashboard}>
-        <ListItemIcon>
-          <FolderOpenIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>Open Dashboard</ListItemText>
-      </MenuItem>
-      <MenuItem onClick={handleSaveDashboard}>
-        <ListItemIcon>
-          <SaveIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>Save Dashboard</ListItemText>
-      </MenuItem>
+      {commands.map(({ text, icon, label }) => (
+        <MenuItem key={text} onClick={() => handleCommand(text)}>
+          <ListItemIcon>{icon}</ListItemIcon>
+          <ListItemText>{label}</ListItemText>
+        </MenuItem>
+      ))}
     </Menu>
   );
-}
+};
 
 export default BurgerMenu;

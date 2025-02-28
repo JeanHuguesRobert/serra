@@ -1,0 +1,24 @@
+{
+  "name": "Solar Panel Farm Optimization",
+  "version": "1.0.0",
+  "model": {
+    "vars": {
+      "T": {"range": [-20, 50], "unit": "C"},
+      "C": {"range": [0, 100], "unit": "%"},
+      "W": {"range": [0, 30], "unit": "m/s"},
+      "N": {"range": [1, 1000], "type": "int"},
+      "e": {"range": [15, 25], "unit": "%"},
+      "t": {"range": [0, 20], "unit": "y"},
+      "D": {"dim": 24, "unit": "kWh"},
+      "S": {"range": [0.5, 1.5]},
+      "a": {"range": [0, 90], "unit": "deg"},
+      "f": {"range": [1, 7], "unit": "d"},
+      "u": {"range": [0.7, 0.9]}
+    },
+    "opt": {
+      "max": "E(T,C,W,N,e,a) - M(f,t)",
+      "learn": {"window": "30d", "conf": 0.85},
+      "alert": "A(e,u) in {low,mid,high}"
+    }
+  }
+}

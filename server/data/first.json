@@ -9,19 +9,17 @@
   "type": "dashboard",
   "content": {
     "layout": "grid",
-    "components": [
+    "elements": [
       {
-        "id": "element-a",
+        "id": "A",
         "type": "number",
         "value": "0",
-        "title": "A",
         "style": "number-inputs-style"
       },
       {
-        "id": "element-b",
+        "id": "B",
         "type": "number",
         "value": "0",
-        "title": "B",
         "style": "number-inputs-style"
       },
       {

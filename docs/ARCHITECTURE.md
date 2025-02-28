@@ -1,4 +1,43 @@
-# Serra Architecture Documentation
+# Serra Architecture
+
+## AI-Driven Interface
+
+Serra represents a departure from traditional UI paradigms:
+
+### Traditional UI
+- Static menus and buttons
+- Fixed interaction patterns
+- Predictable but inflexible
+- Direct manipulation
+
+### Serra's AI Interface
+- Dynamic action suggestions
+- Context-aware interactions
+- Adaptive UI elements
+- Intent-based interaction
+
+## Core Components
+
+```mermaid
+graph TD
+    User[User Intent] -->|Voice/Text| AI[AI Service]
+    AI -->|Suggests| Actions[Action Bar]
+    AI -->|Controls| UI[UI Elements]
+    AI -->|Manages| State[Application State]
+```
+
+### Intent Processing
+1. User expresses intent (voice/text)
+2. AI interprets and suggests actions
+3. UI updates to match context
+4. Actions execute based on intent
+
+### Benefits
+- More natural interaction
+- Reduced UI complexity
+- Contextual assistance
+- Progressive disclosure
+- Unified voice/text interface
 
 ## System Overview
 
@@ -55,6 +94,35 @@ The computation network is built on these principles:
    - Automatic conflict resolution
    - Circular dependency handling
 
+## Architecture Separation
+
+The project is designed with a clear separation of concerns across three distinct layers:
+
+### 1. Platform-Agnostic Core (`core/`)
+- Engine and computation system
+- Element models and interfaces
+- Communication protocols
+- No dependencies on DOM, browser APIs, or UI frameworks
+- Services that work in any JavaScript environment
+
+### 2. Server (`server/`)
+- Node.js/Express server implementation 
+- API endpoints and authentication
+- Server-specific extensions of core services
+- No DOM dependencies
+
+### 3. Client (`client/`)
+- DOM-dependent code
+- Browser-specific implementations
+- React components and UI
+- Platform-specific adapters for core services
+
+This separation ensures:
+- Maximum code reuse
+- Clean testing through dependency isolation
+- Support for different environments
+- Consistent programming model
+
 ## Design Patterns
 
 ### Factory Pattern
@@ -81,6 +149,14 @@ Used in the CLI and API layer:
 - Standardized operations
 - Undo/Redo support
 - Operation logging
+
+### Adapter Pattern
+
+Used to connect platform-specific code with core:
+
+- Consistent interfaces
+- Dependency inversion
+- Platform isolation
 
 ## Component Interactions
 
@@ -130,6 +206,25 @@ Used in the CLI and API layer:
    - Triggered by input changes
    - Follows dependency graph
    - Updates affected elements
+
+## Communication Layer
+
+The communication layer uses several services:
+
+1. **SocketService**
+   - Provides real-time communication
+   - Abstracts transport mechanism
+   - Works in both client and server
+
+2. **WebRTCService**
+   - Enables peer-to-peer communication
+   - Reduces server load for direct data exchange
+   - Can work without central server (decentralized)
+
+3. **ConnectionStatusService**
+   - Manages connection state across transports
+   - Fallback mechanisms between transports
+   - Unified status reporting
 
 ## Best Practices
 

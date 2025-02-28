@@ -1,28 +1,54 @@
-import { Server } from 'socket.io';
-import { io } from 'socket.io-client';
+import { EventEmitter } from '../utils/EventEmitter.js';
+export { createClientSocket, createServerSocket } from './factory.js';
 
 /**
- * Creates client socket instance
+ * Platform-agnostic socket service that works in both browser and server environments
+ * Provides a common interface for socket communication
  */
-const createClient = (url = 'http://localhost:3000') => {
-  console.log('[Socket] Creating client socket');
-  return io(url, {
-    reconnection: false
-  });
-};
-
-/**
- * Creates server socket instance
- */
-const createServer = (httpServer) => {
-  console.log('[Socket] Creating server socket');
-  return new Server(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
+export class SocketService extends EventEmitter {
+    constructor() {
+        super();
+        this.connected = false;
+        this.connectPromise = null;
     }
-  });
-};
 
-export const createClientSocket = createClient;
-export const createServerSocket = createServer;
+    /**
+     * Connect to the socket server
+     * @returns {Promise} - Resolves when connected
+     */
+    async connect() {
+        throw new Error('connect method must be implemented by concrete classes');
+    }
+
+    /**
+     * Disconnect from the socket server
+     */
+    disconnect() {
+        throw new Error('disconnect method must be implemented by concrete classes');
+    }
+
+    /**
+     * Send a message through the socket
+     * @param {string} type - Message type
+     * @param {any} data - Message data
+     */
+    emit(type, data) {
+        throw new Error('emit method must be implemented by concrete classes');
+    }
+
+    /**
+     * Check if connected to the socket server
+     * @returns {boolean} - Connection status
+     */
+    isConnected() {
+        return this.connected;
+    }
+
+    /**
+     * Set a callback for connection status changes
+     * @param {Function} callback - Status change handler
+     */
+    setConnectionStatusCallback(callback) {
+        this.on('statusChange', callback);
+    }
+}

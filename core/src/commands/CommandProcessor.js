@@ -1,16 +1,38 @@
-import { COMMAND_TYPES } from '../constants/events.js';
-import { CommandRegistry } from './CommandRegistry.js';
-
 export class CommandProcessor {
   constructor() {
-    this.registry = new CommandRegistry();
+    // Direct command handlers
+    this.commands = new Map([
+      ['start', () => this.engine?.start()],
+      ['stop', () => this.engine?.stop()],
+      ['list', () => this.listElements()],
+      ['create', (args) => this.createElement(args)],
+      ['delete', (args) => this.deleteElement(args)]
+    ]);
+  }
+
+  setEngine(engine) {
+    this.engine = engine;
   }
 
   async process(command) {
-    const handler = this.registry.getCommand(command.type);
+    const handler = this.commands.get(command.type);
     if (!handler) {
-      throw new Error(`Unknown command type: ${command.type}`);
+      throw new Error(`Unknown command: ${command.type}`);
     }
-    return await handler.execute(command);
+    return await handler(command.args);
+  }
+
+  // Command implementations
+  listElements() {
+    return this.engine?.getElements() || [];
+  }
+
+  createElement(args) {
+    return this.engine?.createElement(args.id, args.type);
+  }
+
+  deleteElement(args) {
+    // Element deletion handled by engine
+    return true;
   }
 }

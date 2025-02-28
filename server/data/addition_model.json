@@ -1,0 +1,16 @@
+{
+  "name": "Basic Addition Model",
+  "version": "1.0.0",
+  "model": {
+    "vars": {
+      "A": {"range": [-100, 100], "type": "float"},
+      "B": {"range": [-100, 100], "type": "float"},
+      "X": {"range": [-200, 200], "type": "float"}
+    },
+    "opt": {
+      "eq": "X = A + B",
+      "learn": {"window": "1d", "conf": 0.99},
+      "alert": "X > 150 ? high : (X < -150 ? low : mid)"
+    }
+  }
+}

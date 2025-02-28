@@ -1,56 +1,23 @@
 import { BehaviorSubject, Subject, map } from 'rxjs';
 import { ModelFactory } from './factories/ModelFactory.js';
-import { EventEmitter } from 'events';
 
-/**
- * Core Engine class that manages all elements and their interactions.
- * Uses the Singleton pattern to ensure only one engine instance exists.
- * 
- * The Engine is responsible for:
- * - Managing elements lifecycle (creation, updates, deletion)
- * - Handling state changes and computations
- * - Broadcasting updates to observers
- * - Maintaining element connections and relationships
- * 
- * Design decisions:
- * - Uses RxJS for reactive state management
- * - Implements EventEmitter for loose coupling
- * - Enforces single instance to prevent state conflicts
- * - Separates concerns via ModelFactory for element creation
- */
-export class Engine extends EventEmitter {
+export class Engine {
   static instance = null;
   
   constructor() {
-    super();
-    // Enforce singleton pattern
     if (Engine.instance) {
       throw new Error('Engine instance already exists. Use the existing instance.');
     }
     Engine.instance = this;
-
-    // Core state containers
-    this.elements = new Map();          // All active elements
-    this.running = false;               // Engine running state
-    this.currentDashboard = null;       // Active dashboard reference
-    this.connections = new Map();       // Element relationships
-    
-    // Reactive state management
-    this.state$ = new BehaviorSubject({ elements: [] });  // Current state
-    this.updates$ = new Subject();      // Update stream
-    
-    // Element creation and management
+    this.elements = new Map();
+    this.running = false;
+    this.currentDashboard = null;
+    this.connections = new Map();
+    this.state$ = new BehaviorSubject({ elements: [] });
+    this.updates$ = new Subject();
     this.modelFactory = new ModelFactory(this);
-    
-    // Computation state flag to prevent recursion
-    this.processingComputations = false;
   }
-
-  /**
-   * Starts the engine and initializes all elements.
-   * Triggers computations and notifies observers of state change.
-   * Only the singleton instance can be started.
-   */
+  
   start() {
     if (this.running) return;
     if (Engine.instance !== this) {
@@ -64,19 +31,20 @@ export class Engine extends EventEmitter {
         element.computations.forEach((computation, target) => {
           const targetElement = this.getElement(target);
           if (targetElement) {
-            const inputs = computation.inputs.map(inputId => this.getElement(inputId));
-            if (inputs.every(input => input)) {
-              const inputValues = inputs.map(input => input.getValue());
-              if (inputValues.every(value => value !== undefined)) {
-                this.processComputations(inputs[0].id, inputValues[0]);
+            computation.inputs.forEach(inputId => {
+              const inputElement = this.getElement(inputId);
+              if (inputElement) {
+                const value = inputElement.getValue();
+                if (value !== undefined) {
+                  this.processComputations(inputId, value);
+                }
               }
-            }
+            });
           }
         });
       }
     });
     this.updateState();
-    this.emit('stateChange', this.getState());
   }
   
   stop() {
@@ -85,7 +53,7 @@ export class Engine extends EventEmitter {
     }
     this.running = false;
     this.elements.forEach(element => element.stop());
-    this.emit('stateChange', this.getState());
+    Engine.instance = null; // Clear the singleton instance when stopped
   }
   
   createElement(id, type) {
@@ -123,7 +91,7 @@ export class Engine extends EventEmitter {
       if (oldValue !== value) {
         element.setProperty(property, value);
         this.updates$.next({ id, property, value });
-        if (property === 'value' && !this.processingComputations) {
+        if (property === 'value') {
           this.processComputations(id, value);
         }
         this.updateState();
@@ -187,42 +155,32 @@ export class Engine extends EventEmitter {
   }
 
   processComputations(id, value) {
-    if (this.processingComputations) {
-      return;
-    }
-    
-    this.processingComputations = true;
-    
     const processed = new Set();
     const queue = [id];
 
-    try {
-      while (queue.length > 0) {
-        const currentId = queue.shift();
-        this.elements.forEach(element => {
-          if (element.computations.size > 0) {
-            element.computations.forEach((computation, target) => {
-              if (computation.inputs.includes(currentId) && !processed.has(target)) {
-                const targetElement = this.getElement(target);
-                if (targetElement) {
-                  const inputs = computation.inputs.map(inputId => this.getElement(inputId)?.getValue());
-                  if (inputs.every(input => input !== undefined)) {
-                    const fn = new Function(...computation.inputs, computation.compute);
-                    const result = fn(...inputs);
-                    if (targetElement.getValue() !== result) {
-                      targetElement.setValue(result);
-                      processed.add(target);
-                      queue.push(target);
-                    }
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      this.elements.forEach(element => {
+        if (element.computations.size > 0) {
+          element.computations.forEach((computation, target) => {
+            if (computation.inputs.includes(currentId) && !processed.has(target)) {
+              const targetElement = this.getElement(target);
+              if (targetElement) {
+                const inputs = computation.inputs.map(inputId => this.getElement(inputId)?.getValue());
+                if (inputs.every(input => input !== undefined)) {
+                  const fn = new Function(...computation.inputs, computation.compute);
+                  const result = fn(...inputs);
+                  if (targetElement.getValue() !== result) {
+                    targetElement.setValue(result);
+                    processed.add(target);
+                    queue.push(target);
                   }
                 }
               }
-            });
-          }
-        });
-      }
-    } finally {
-      this.processingComputations = false;
+            }
+          });
+        }
+      });
     }
   }
 
@@ -234,20 +192,8 @@ export class Engine extends EventEmitter {
     return this.currentDashboard;
   }
 
-  /**
-   * Gets the current state of the engine.
-   * Used for serialization and state synchronization.
-   * @returns {Object} Current engine state with elements
-   */
   getState() {
-    return {
-      running: this.running,
-      elements: Array.from(this.elements.values()).map(el => ({
-        id: el.id,
-        type: el.getType(),
-        value: el.getValue()
-      }))
-    };
+    return this.state$.getValue();
   } 
 
   getStateObservable() {
@@ -272,4 +218,5 @@ export class Engine extends EventEmitter {
   getAllConnections() {
     return this.connections;
   }
+
 }

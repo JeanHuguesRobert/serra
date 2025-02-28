@@ -1,16 +1,10 @@
 import io from 'socket.io-client';
+import { SocketService as CoreSocketService } from '@serra/core';
 
-class SocketService {
-    static instance = null;
-    
+class BrowserSocketService extends CoreSocketService {
     constructor() {
-        if (SocketService.instance) {
-            return SocketService.instance;
-        }
+        super();
         this.socket = null;
-        this.connected = false;
-        this.connectPromise = null;
-        SocketService.instance = this;
     }
 
     connect(url = 'http://localhost:3000') {
@@ -28,17 +22,20 @@ class SocketService {
             this.socket.on('connect', () => {
                 this.connected = true;
                 console.log('Socket connected');
+                this.emit('statusChange', 'connected');
                 resolve(this.socket);
             });
 
             this.socket.on('connect_error', (error) => {
                 console.error('Socket connection error:', error);
+                this.emit('statusChange', 'error');
                 reject(error);
             });
 
             this.socket.on('disconnect', () => {
                 this.connected = false;
                 console.log('Socket disconnected');
+                this.emit('statusChange', 'disconnected');
             });
         });
 
@@ -51,10 +48,16 @@ class SocketService {
             this.socket = null;
             this.connected = false;
             this.connectPromise = null;
+            this.emit('statusChange', 'disconnected');
         }
     }
 
     emit(event, data) {
+        if (event === 'statusChange') {
+            super.emit(event, data);
+            return;
+        }
+
         if (this.socket && this.connected) {
             this.socket.emit(event, data);
         } else {
@@ -63,54 +66,25 @@ class SocketService {
     }
 
     on(event, callback) {
+        if (event === 'statusChange') {
+            super.on(event, callback);
+            return;
+        }
+
         if (this.socket) {
             this.socket.on(event, callback);
         }
     }
 
     off(event, callback) {
+        if (event === 'statusChange') {
+            super.off(event, callback);
+            return;
+        }
+
         if (this.socket) {
             this.socket.off(event, callback);
         }
-    }
-
-    isConnected() {
-        return this.connected;
-    }
-
-    static async requestDashboard(dashboardId) {
-        await SocketService.instance.connectPromise;
-        return SocketService.instance.requestDashboard(dashboardId);
-    }
-
-    static async setCurrentDashboard(dashboardId) {
-        await SocketService.instance.connectPromise;
-        return SocketService.instance.setCurrentDashboard(dashboardId);
-    }
-
-    static async emit(event, data) {
-        await SocketService.instance.connectPromise;
-        return SocketService.instance.emit(event, data);
-    }
-
-    static on(event, callback) {
-        return SocketService.instance.on(event, callback);
-    }
-
-    static off(event, callback) {
-        return SocketService.instance.off(event, callback);
-    }
-
-    static isConnected() {
-        return SocketService.instance.isConnected();
-    }
-
-    static async connect(url) {
-        return SocketService.instance.connect(url);
-    }
-
-    static disconnect() {
-        return SocketService.instance.disconnect();
     }
 
     async requestDashboard(dashboardId) {
@@ -175,7 +149,6 @@ class SocketService {
 }
 
 // Create a singleton instance
-const socketService = new SocketService();
+const socketService = new BrowserSocketService();
 
-export { SocketService };
 export default socketService;
