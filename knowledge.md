@@ -1,4 +1,20 @@
+---
+title: "Serra dashboard system knowledge"
+description: "Working-memory notes about Serra's architecture and implementation state."
+date: 2026-07-07
+last_modified_at: 2026-07-07
+license: MIT
+document_role: "working-memory"
+document_kind: "project-notes"
+visibility: "public_candidate"
+lifecycle_state: "draft"
+---
+
 # Serra Dashboard System Knowledge
+
+This file is working memory, not the canonical public entry point. Prefer
+`README.md`, `docs/public-corpus.md` and reviewed files under `docs/` for public
+corpus navigation until this note is reviewed.
 
 ## Project Overview
 Serra is an AI-assisted no-code distributed reactive system for building and running real-time dashboards with bidirectional data flow. It uses a Smart Plumbing system based on Constraint Propagation Networks.
@@ -11,10 +27,12 @@ Serra is an AI-assisted no-code distributed reactive system for building and run
 - **Renderers**: Platform-agnostic description of how elements should be rendered
 
 ## Project Structure
-- **core/**: Contains the platform-agnostic engine, elements, formula computation, rendering system, and shared services
-- **client/**: React-based frontend for the dashboard UI with DOM-dependent code
-- **server/**: Backend services and API endpoints for Node.js environment
+- **core/**: Contains the platform-agnostic engine, elements, formula computation, rendering system, and shared services (using ES modules)
+- **client/**: React-based frontend for the dashboard UI with DOM-dependent code (using ES modules)
+- **server/**: Backend services and API endpoints for Node.js environment (using ES modules)
 - **docs/**: Documentation for architecture, API, CLI, and formula system
+
+Note: The entire codebase uses modern ES modules (import/export) instead of CommonJS (require/module.exports).
 
 ## Architecture Separation
 The project is designed with a clear separation of concerns across three distinct layers:
@@ -43,7 +61,7 @@ The project is designed with a clear separation of concerns across three distinc
      - NaturalLanguageProcessor.js: NLP for commands
    - utils/: Utility functions and helpers
      - EventEmitter.js: Event handling
-     - logger.js: Logging utilities
+     - denbug.js: Logging utilities
      - Continuation.js: Continuation passing
    - No dependencies on DOM, browser APIs, or UI frameworks
 
