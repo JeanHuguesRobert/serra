@@ -30,8 +30,11 @@ Use this order when indexing or reviewing Serra:
 4. [Elements](ELEMENTS.md) - dashboard element model.
 5. [MCP boundary](MCP.md) - public rules for future MCP-style access.
 6. [Network boundary](NETWORK.md) - public network and agent-control boundary.
-7. [API](API.md) - HTTP/API surface, after visibility review.
-8. [CLI](CLI.md) - command-line surface, after freshness review.
+7. [Roadmap](ROADMAP.md) - planning context, not implementation evidence.
+8. [Project rules](RULES.md) - working rules for development and documentation.
+9. [Repository map](FILES.md) - sanitized public structure map.
+10. [API](API.md) - HTTP/API surface, after visibility review.
+11. [CLI](CLI.md) - command-line surface, after freshness review.
 
 `knowledge.md` may be useful for local orientation, but it should be reviewed
 before being treated as a public source document. It reads like accumulated
@@ -44,12 +47,18 @@ have been reviewed:
 
 - `docs/INSTRUCTIONS.md` - may contain operational or agent-facing instructions
   that need classification.
-- `docs/FILES.md`, `docs/RULES.md`, `docs/TODO.md`, `docs/ROADMAP.md` - useful
-  candidates, but still need freshness and role classification.
+- `docs/TODO.md` - useful as public candidate working memory, but not canonical
+  implementation evidence.
+- `docs/INSTRUCTIONS.md` - public candidate agent guidance, not blanket
+  authorization.
 
 `docs/MCP.md` and `docs/NETWORK.md` are now reviewed as public boundary notes.
 They should be indexed as design guidance, not as evidence of deployed runtime
 services.
+
+`docs/FILES.md`, `docs/RULES.md` and `docs/ROADMAP.md` are now reviewed as
+public documentation. They should be interpreted according to their frontmatter
+roles.
 
 ## Do not index as source
 
