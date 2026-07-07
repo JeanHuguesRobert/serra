@@ -1,131 +1,96 @@
 ---
-title: Serre CLI Reference
-description: Command line interface for the Serre freeform spreadsheet system
+title: "Serra CLI reference"
+description: "Public CLI design reference for Serra dashboard and reactive-computation operations."
+date: 2026-07-07
+last_modified_at: 2026-07-07
+license: MIT
+document_role: "reference"
+document_kind: "cli-reference"
+visibility: "public"
+lifecycle_state: "draft"
 ---
 
-# Serre CLI Reference
+# Serra CLI reference
 
-## Element Classes
-| Class | Description |
-|-------|-------------|
-| `Cell` | Basic value holder, can be input and/or output |
-| `Formula` | Contains JavaScript computation logic, connects cells |
-| `Container` | Groups related elements together |
-| `Terminal` | Display-only element for visualization |
-| `Sensor` | Input-only element, typically for external data |
-| `Actuator` | Output-only element, for external actions |
-| `Dashboard` | Top-level container for organizing elements |
+This document describes the intended CLI vocabulary for Serra. It is a design
+reference, not a guarantee that every command is currently implemented.
 
-## Core Primitives
+## Boundary rule
 
-### Node Management
-| Primitive | Description |
-|-----------|-------------|
-| `addNode <id> <class>` | Create a new node of specified class |
-| `removeNode <id>` | Remove a node and its connections |
-| `getNode <id>` | Get node information |
+The CLI is an operator surface. Commands that mutate dashboards, execute code or
+connect to networked agents should be considered local/admin operations unless a
+public read-only mode is explicitly implemented.
 
-### Stream Operations
-| Primitive | Description |
-|-----------|-------------|
-| `pipe <sourceId> <targetId>` | Connect nodes with a stream |
-| `unpipe <sourceId> <targetId>` | Disconnect nodes |
-| `inject <nodeId> <code>` | Inject JavaScript behavior into node |
-| `mutate <nodeId> <value>` | Update node value |
+## Core concepts
 
-### Graph Operations
-| Primitive | Description |
-|-----------|-------------|
-| `getUpstream <nodeId>` | Get nodes that feed into this node |
-| `getDownstream <nodeId>` | Get nodes that this node feeds into |
-| `merge <nodeIds[]> <targetId>` | Combine multiple streams into one |
-| `split <sourceId> <targetIds[]>` | Split one stream to multiple targets |
-
-### State Control
-| Primitive | Description |
-|-----------|-------------|
-| `freeze <nodeId>` | Temporarily stop propagation |
-| `unfreeze <nodeId>` | Resume propagation |
-| `snapshot <name>` | Save current graph state |
-| `restore <name>` | Restore saved graph state |
-
-### Observation
-| Primitive | Description |
-|-----------|-------------|
-| `observe <nodeId>` | Start watching node changes |
-| `unobserve <nodeId>` | Stop watching node changes |
-| `tap <nodeId> <code>` | Add side-effect without affecting stream |
-
-## High-Level Commands
-
-### Dashboard Management
-| Command | Description |
+| Concept | Description |
 |---------|-------------|
-| `create-dashboard <name>` | Create a new dashboard |
-| `use <dashboard>` | Set current dashboard context |
-| `list-dashboards` | Show available dashboards |
+| Element | A typed value holder or display unit |
+| Formula | A relationship between elements |
+| Dashboard | A named working surface |
+| Stream | A flow of values or events |
+| Adapter | Runtime-specific bridge to client, server or network services |
 
-### Cell Operations
-| Command | Description |
-|---------|-------------|
-| `create-cell <name>` | Create a new cell |
-| `set <cellId> <value>` | Set a cell's value |
-| `watch <cellId>` | Watch cell value changes |
+## Read-only commands
 
-### Formula Operations
-| Command | Description |
-|---------|-------------|
-| `create-formula` | Create a formula relationship using JavaScript |
-| `link-cells` | Create direct cell relationships |
+Read-only commands are safest for future public or agent-facing surfaces:
 
-### Data Management
-| Command | Description |
-|---------|-------------|
-| `import <source>` | Import data from external source |
-| `export <target>` | Export dashboard data |
+| Command | Purpose |
+|---------|---------|
+| `list-dashboards` | Show available dashboard names or examples |
+| `describe-dashboard <name>` | Describe dashboard metadata |
+| `list-elements <dashboard>` | Show element metadata |
+| `describe-element <id>` | Describe one element |
+| `explain-formula <id>` | Explain a formula relationship |
+| `status` | Show safe service status |
 
-## Examples
+## Local/admin commands
 
-### Using Primitives
+These commands can mutate state or execute behavior and should require a local
+or admin boundary:
+
+| Command | Purpose |
+|---------|---------|
+| `create-dashboard <name>` | Create a dashboard |
+| `use <dashboard>` | Change current dashboard context |
+| `add-element <id> <type>` | Create an element |
+| `remove-element <id>` | Remove an element |
+| `set <elementId> <value>` | Change an element value |
+| `create-formula` | Create a formula relationship |
+| `connect <sourceId> <targetId>` | Connect elements or streams |
+| `disconnect <sourceId> <targetId>` | Disconnect elements or streams |
+
+## High-risk commands
+
+These should not be public defaults:
+
+- arbitrary JavaScript injection;
+- shell command execution;
+- remote script execution;
+- provider configuration changes;
+- network agent enrollment;
+- exporting private dashboard state.
+
+If such commands exist, they should be explicit, auditable and policy-guarded.
+
+## Example, read-only
+
 ```bash
-# Create a simple sum relationship
-addNode "A" "Cell"
-addNode "B" "Cell"
-addNode "X" "Formula"
-inject "X" "
-  const a$ = engine.getStream('A');
-  const b$ = engine.getStream('B');
-  combineLatest([a$, b$]).pipe(
-    map(([a, b]) => a + b)
-  ).subscribe(stream$);
-"
-```
-## Examples
-```bash
-# Create and use a dashboard
-create-dashboard "AI Greenhouse"
-use "AI Greenhouse"
-
-# Create cells and formulas
-create-formula {
-  forward: {
-    inputs: ['Temperature', 'Humidity'],
-    output: 'GrowthIndex',
-    compute: '(temp, hum) => temp * hum / 100'
-  }
-}
-
-# Set and watch values
-set Temperature 25
-watch GrowthIndex
+serra status
+serra list-dashboards
+serra describe-dashboard greenhouse-demo
 ```
 
-## Viewing This Documentation
-You can view this documentation with:
-```bash
-# Using VS Code
-code c:\tweesic\serre\docs\CLI.md
+## Example, local/admin
 
-# Preview in VS Code
-# Press Ctrl+Shift+V or click the preview icon in the top-right corner
+```bash
+serra create-dashboard greenhouse-demo
+serra add-element temperature number
+serra add-element target number
+serra create-formula temperature-control
 ```
+
+## Corpus note
+
+Index this document as a CLI design reference. Do not treat command names as
+implemented behavior until the CLI code is reviewed.

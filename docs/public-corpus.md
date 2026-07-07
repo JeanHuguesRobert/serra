@@ -33,8 +33,8 @@ Use this order when indexing or reviewing Serra:
 7. [Roadmap](ROADMAP.md) - planning context, not implementation evidence.
 8. [Project rules](RULES.md) - working rules for development and documentation.
 9. [Repository map](FILES.md) - sanitized public structure map.
-10. [API](API.md) - HTTP/API surface, after visibility review.
-11. [CLI](CLI.md) - command-line surface, after freshness review.
+10. [API](API.md) - public API boundary and candidate route shapes.
+11. [CLI](CLI.md) - public CLI vocabulary and local/admin boundary.
 
 `knowledge.md` may be useful for local orientation, but it should be reviewed
 before being treated as a public source document. It reads like accumulated
