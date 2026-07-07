@@ -157,6 +157,7 @@ Serra easily integrates with:
 
 Detailed documentation is available in the following sections:
 
+- [Public Corpus Guide](docs/public-corpus.md) - Public reading path and Cogentia corpus integration guidance
 - [API Documentation](docs/API.md) - Comprehensive API reference
 - [Architecture Guide](docs/ARCHITECTURE.md) - System architecture and design
 - [CLI Reference](docs/CLI.md) - Command-line interface documentation

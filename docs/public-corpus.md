@@ -1,0 +1,77 @@
+---
+title: "Serra public corpus guide"
+description: "Public reading path and corpus-integration guidance for Serra."
+date: 2026-07-07
+last_modified_at: 2026-07-07
+license: MIT
+document_role: "operational"
+document_kind: "public-corpus-guide"
+visibility: "public"
+lifecycle_state: "active"
+---
+
+# Serra public corpus guide
+
+This document defines the public reading path for Serra before it is added to
+the Cogentia corpus registry.
+
+Serra is a public repository about AI-mediated interfaces, adaptive dashboards,
+reactive computation and operational control surfaces. Git and reviewed
+Markdown remain canonical; generated builds, local secrets and unreviewed
+runtime state are not corpus sources.
+
+## Public reading path
+
+Use this order when indexing or reviewing Serra:
+
+1. [README](../README.md) - high-level project orientation.
+2. [Architecture](ARCHITECTURE.md) - system architecture and core concepts.
+3. [Formula system](FORMULA.md) - reactive computation model.
+4. [Elements](ELEMENTS.md) - dashboard element model.
+5. [API](API.md) - HTTP/API surface, after visibility review.
+6. [CLI](CLI.md) - command-line surface, after freshness review.
+
+`knowledge.md` may be useful for local orientation, but it should be reviewed
+before being treated as a public source document. It reads like accumulated
+project memory and may mix stable facts with implementation notes.
+
+## Documents needing review before public indexing
+
+These documents should not be treated as stable public corpus sources until they
+have been reviewed:
+
+- `docs/MCP.md` - appears to include generic MCP SDK material and should be
+  reduced to Serra-specific guidance before indexing.
+- `docs/NETWORK.md` - describes network and agent execution flows; review for
+  public safety and deployment sensitivity.
+- `docs/INSTRUCTIONS.md` - may contain operational or agent-facing instructions
+  that need classification.
+- `docs/FILES.md`, `docs/RULES.md`, `docs/TODO.md`, `docs/ROADMAP.md` - useful
+  candidates, but still need freshness and role classification.
+
+## Do not index as source
+
+The following are not public corpus source material:
+
+- local environment files;
+- private keys, certificates, tokens or credential references;
+- generated client builds such as `client/dist`;
+- dependency directories;
+- transient runtime data;
+- local uncommitted experiments unless explicitly reviewed.
+
+## Corpus integration status
+
+Serra is not yet in the canonical Cogentia corpus registry. The current
+preparation sequence is tracked in:
+
+- [JeanHuguesRobert/cogentia#47](https://github.com/JeanHuguesRobert/cogentia/issues/47)
+- [JeanHuguesRobert/serra#8](https://github.com/JeanHuguesRobert/serra/issues/8)
+
+Before registry integration, Serra should have:
+
+- a stable README;
+- a reviewed public documentation map;
+- no tracked generated build output;
+- no secret-like local files in Git;
+- explicit visibility guidance for network, MCP and operational documents.
