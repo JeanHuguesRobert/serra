@@ -2,11 +2,28 @@
 node_modules/
 /dist
 /build
+**/dist/
+**/build/
 
 # Environment files
 .env
 .env.local
 .env.*.local
+*.env
+
+# Local secrets and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+*secret*
+*token*
+*credential*
+id_rsa
+id_ed25519
+fractanet-mesh
 
 # Logs
 npm-debug.log*
