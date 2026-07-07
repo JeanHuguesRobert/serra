@@ -96,32 +96,34 @@ The computation network is built on these principles:
 
 ## Architecture Separation
 
-The project is designed with a clear separation of concerns across three distinct layers:
+Serra is organized as a modern JavaScript codebase using ES modules. The
+intended separation is:
 
 ### 1. Platform-Agnostic Core (`core/`)
-- Engine and computation system
-- Element models and interfaces
-- Communication protocols
-- No dependencies on DOM, browser APIs, or UI frameworks
-- Services that work in any JavaScript environment
+
+- Engine and computation model
+- Element abstractions
+- Formula and propagation services
+- Shared command, continuation and utility layers
+- No dependency on DOM, browser APIs or UI frameworks
 
 ### 2. Server (`server/`)
-- Node.js/Express server implementation 
-- API endpoints and authentication
-- Server-specific extensions of core services
-- No DOM dependencies
+
+- Node.js/Express server implementation
+- API endpoints and server-side services
+- Server-side AI, auth, job and transport adapters
+- No DOM dependency
 
 ### 3. Client (`client/`)
-- DOM-dependent code
-- Browser-specific implementations
-- React components and UI
-- Platform-specific adapters for core services
 
-This separation ensures:
-- Maximum code reuse
-- Clean testing through dependency isolation
-- Support for different environments
-- Consistent programming model
+- Browser and React user interface
+- DOM-dependent components and hooks
+- Browser transports and client-side adapters
+- Dashboard presentation and interaction surfaces
+
+This separation is important for Serra's corpus role: it makes it possible to
+discuss the reactive computation model, the operational API and the user
+interface without confusing them as one layer.
 
 ## Design Patterns
 
@@ -152,11 +154,12 @@ Used in the CLI and API layer:
 
 ### Adapter Pattern
 
-Used to connect platform-specific code with core:
+Used to connect platform-specific code to the core model:
 
-- Consistent interfaces
-- Dependency inversion
-- Platform isolation
+- consistent interfaces across client and server;
+- dependency inversion between core abstractions and runtime transports;
+- platform isolation for DOM, Node.js and network-specific concerns;
+- easier testing through mockable boundaries.
 
 ## Component Interactions
 
@@ -209,22 +212,30 @@ Used to connect platform-specific code with core:
 
 ## Communication Layer
 
-The communication layer uses several services:
+The communication layer is still evolving, but it should remain a boundary
+between the core computation model and runtime-specific transports.
 
-1. **SocketService**
-   - Provides real-time communication
-   - Abstracts transport mechanism
-   - Works in both client and server
+Current and planned concerns include:
 
-2. **WebRTCService**
-   - Enables peer-to-peer communication
-   - Reduces server load for direct data exchange
-   - Can work without central server (decentralized)
+1. **Connection status**
+   - Tracks transport availability
+   - Gives the UI a stable view of connected, degraded or offline states
+   - Avoids mixing transport details into dashboard logic
 
-3. **ConnectionStatusService**
-   - Manages connection state across transports
-   - Fallback mechanisms between transports
-   - Unified status reporting
+2. **Socket and gateway transports**
+   - Provide real-time client/server communication
+   - Keep transport selection outside the core engine
+   - Prepare for browser and server implementations to diverge safely
+
+3. **WebRTC and peer-to-peer experiments**
+   - May reduce server dependency for direct exchanges
+   - Must remain optional and policy-governed
+   - Should not make network topology part of the public corpus by accident
+
+4. **MCP and agent-facing gateways**
+   - Are relevant to Serra's future role in Cogentia and Fractanet
+   - Need public/private review before being indexed as stable public sources
+   - Should expose explicit tools and citations rather than raw local state
 
 ## Best Practices
 
