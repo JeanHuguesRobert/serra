@@ -28,8 +28,10 @@ Use this order when indexing or reviewing Serra:
 2. [Architecture](ARCHITECTURE.md) - system architecture and core concepts.
 3. [Formula system](FORMULA.md) - reactive computation model.
 4. [Elements](ELEMENTS.md) - dashboard element model.
-5. [API](API.md) - HTTP/API surface, after visibility review.
-6. [CLI](CLI.md) - command-line surface, after freshness review.
+5. [MCP boundary](MCP.md) - public rules for future MCP-style access.
+6. [Network boundary](NETWORK.md) - public network and agent-control boundary.
+7. [API](API.md) - HTTP/API surface, after visibility review.
+8. [CLI](CLI.md) - command-line surface, after freshness review.
 
 `knowledge.md` may be useful for local orientation, but it should be reviewed
 before being treated as a public source document. It reads like accumulated
@@ -40,14 +42,14 @@ project memory and may mix stable facts with implementation notes.
 These documents should not be treated as stable public corpus sources until they
 have been reviewed:
 
-- `docs/MCP.md` - appears to include generic MCP SDK material and should be
-  reduced to Serra-specific guidance before indexing.
-- `docs/NETWORK.md` - describes network and agent execution flows; review for
-  public safety and deployment sensitivity.
 - `docs/INSTRUCTIONS.md` - may contain operational or agent-facing instructions
   that need classification.
 - `docs/FILES.md`, `docs/RULES.md`, `docs/TODO.md`, `docs/ROADMAP.md` - useful
   candidates, but still need freshness and role classification.
+
+`docs/MCP.md` and `docs/NETWORK.md` are now reviewed as public boundary notes.
+They should be indexed as design guidance, not as evidence of deployed runtime
+services.
 
 ## Do not index as source
 
