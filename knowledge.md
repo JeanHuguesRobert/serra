@@ -4,8 +4,8 @@ description: "Working-memory notes about Serra's architecture and implementation
 date: 2026-07-07
 last_modified_at: 2026-07-07
 license: MIT
-document_role: "working-memory"
-document_kind: "project-notes"
+document_role: "operational"
+document_kind: "working-memory"
 visibility: "public_candidate"
 lifecycle_state: "draft"
 ---
