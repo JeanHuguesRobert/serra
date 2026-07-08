@@ -1,23 +1,17 @@
+---
+title: "Serra Documentation"
+description: "Short documentation entry point for Serra."
+date: 2026-07-08
+last_modified_at: 2026-07-08
+license: MIT
+document_role: "index"
+document_kind: "documentation-index"
+visibility: "public"
+lifecycle_state: "active"
+---
+
 # Serra Documentation
 
-Welcome to Serra documentation! Serra is a powerful dashboard creation and management system that allows you to build interactive, real-time dashboards.
+The public corpus entry point is [public-corpus.md](public-corpus.md).
 
-## Table of Contents
-
-- [Elements](ELEMENTS.md) - Learn about the building blocks of Serra dashboards
-- [Formula](FORMULA.md) - Understanding formula computations and expressions
-- [Architecture](ARCHITECTURE.md) - Overview of Serra's system architecture
-- [API](API.md) - API reference documentation
-- [CLI](CLI.md) - Command Line Interface documentation
-
-## Getting Started
-
-Serra provides a flexible and intuitive way to create dashboards with various elements like displays, numbers, and interactive components. All elements can be dynamically updated through WebSocket connections, enabling real-time data visualization and interaction.
-
-## Key Features
-
-- Real-time updates via WebSocket
-- Modular dashboard elements
-- Formula-based computations
-- Interactive navigation
-- Extensible architecture
+For the main project overview, see [../README.md](../README.md).
