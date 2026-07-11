@@ -7,6 +7,15 @@ Serra is an innovative interface system where all user interactions are mediated
 - Context-aware action suggestions
 - Dynamic UI elements controlled by AI
 
+## Start Here
+
+- [Public corpus guide](docs/public-corpus.md) explains Serra's public/private boundary and recommended reading path.
+- [Research index](research/index.md) maps the maintained architecture, API, protocol and operational documentation.
+- [Corpus status](research/corpus-status.md) is the generated structural view of Serra in the wider Cogentia corpus.
+- [Architecture](docs/ARCHITECTURE.md) describes the system components and boundaries.
+- [Repository map](docs/FILES.md) helps navigate the client, core and server packages.
+- [Project rules](docs/RULES.md) and [agent instructions](docs/INSTRUCTIONS.md) govern changes.
+
 ## Key Features
 
 ### AI-First Interface
@@ -163,6 +172,11 @@ Detailed documentation is available in the following sections:
 - [CLI Reference](docs/CLI.md) - Command-line interface documentation
 - [Elements Guide](docs/ELEMENTS.md) - Available dashboard elements
 - [Formula System](docs/FORMULA.md) - Formula computation system
+- [Authentication Guide](docs/AUTH.md) - Authentication boundary and usage
+- [MCP Boundary](docs/MCP.md) - Model Context Protocol integration boundary
+- [Network Boundary](docs/NETWORK.md) - Network and transport responsibilities
+- [Research Index](research/index.md) - Curated corpus navigation
+- [Corpus Status](research/corpus-status.md) - Generated corpus coverage
 
 ## Community and Support
 
