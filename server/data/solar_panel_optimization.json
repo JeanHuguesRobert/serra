@@ -1,5 +1,5 @@
 {
-  "name": "Solar Panel Farm Optimization",
+  "id": "Solar Panel Farm Optimization",
   "version": "1.0.0",
   "model": {
     "vars": {

@@ -1,44 +1,73 @@
 import express from 'express';
-import { DashboardCommands } from '../../core/src/commands/DashboardCommands';
+import chatRouter from './chat.js';
+import { agentsRouter } from './agents.js';
+import { aiProvidersRouter } from './ai-providers.js';
+import dashboardsRouter, { setupDashboardRoutes } from './dashboards.js';
+import { DocumentationService } from '../../../core/src/services/DocumentationService.js';
 
 export function setupRoutes(app, engine) {
-  const commands = new DashboardCommands(engine);
-  const router = express.Router();
+  const documentation = new DocumentationService();
 
-  router.post('/dashboard', (req, res) => {
-    const { name } = req.body;
-    const dashboard = commands.create(name);
-    res.json({ id: dashboard.id });
+  // HTTPS redirect middleware for API requests
+  app.use('/api', (req, res, next) => {
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      res.redirect(`https://${req.headers.host}${req.url}`);
+    } else {
+      next();
+    }
   });
 
-  router.post('/element', (req, res) => {
-    const { dashboardId, type, id, properties } = req.body;
-    const element = commands.addElement(dashboardId, type, id, properties);
-    res.json({ id: element.id });
+  // WebSocket upgrade handling
+  app.get('/socket.io/*', (req, res, next) => {
+    if (req.headers.upgrade && req.headers.upgrade.toLowerCase() === 'websocket' ||
+        req.headers.connection && req.headers.connection.toLowerCase().includes('upgrade')) {
+      return next();
+    }
+    
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      res.redirect(`https://${req.headers.host}${req.url}`);
+    } else {
+      next();
+    }
   });
 
-  router.post('/formula', (req, res) => {
-    const { outputId, inputs, formula } = req.body;
-    commands.setFormula(outputId, inputs, formula);
-    res.json({ success: true });
+  // Static assets handling with cache control
+  app.get('/assets/*', (req, res, next) => {
+    res.set({
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Vary': 'Accept-Encoding'
+    });
+    next();
   });
 
-  router.post('/code/:elementId', (req, res) => {
-    const { code } = req.body;
-    commands.injectCode(req.params.elementId, code);
-    res.json({ success: true });
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok',
+      version: process.env.npm_package_version,
+      uptime: process.uptime(),
+      engineState: engine.state.current()
+    });
   });
 
-  router.get('/value/:elementId', (req, res) => {
-    const value = commands.getValue(req.params.elementId);
-    res.json({ value });
+  // Documentation routes
+  app.use('/api/docs', async (req, res) => {
+    try {
+      const filename = req.path.slice(1); // Remove leading slash
+      const content = await documentation.getDocumentation(filename);
+      res.type('text/markdown').send(content);
+    } catch (error) {
+      res.status(404).send(error.message);
+    }
   });
 
-  router.put('/value/:elementId', (req, res) => {
-    const { value } = req.body;
-    const dependencies = commands.setValue(req.params.elementId, value);
-    res.json({ dependencies });
-  });
+  app.use('/api/chat', chatRouter);
+  app.use('/api/agents', agentsRouter);
+  app.use('/api/ai-providers', aiProvidersRouter);
+  app.use('/api/dashboards', setupDashboardRoutes(app, engine));
 
-  app.use('/api', router);
+  // Client-side routing - serve index.html for all other routes
+  app.get('*', (req, res) => {
+    res.sendFile('index.html', { root: './client/dist' });
+  });
 }

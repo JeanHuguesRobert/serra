@@ -16,7 +16,6 @@ function App() {
     actions: [],
     isListening: false,
     isSpeaking: true,
-    systemPrompt: '',
     // Add UI context tracking
     context: {
       activeView: null,    // Currently visible section
@@ -79,18 +78,13 @@ function App() {
 
     if (!engine) {
       engine = new Engine();
-      engine.state$.subscribe(state => socket.emit('engine:state', state));
+      engine.on('stateChange', state => socket.emit('engine:state', state));
     }
 
     socket.on('chat:response', msg => {
-      const responseMsg = {
-        ...msg,
-        role: 'assistant',
-        timestamp: new Date().toISOString()
-      };
       setState(s => ({
         ...s, 
-        messages: [...s.messages, responseMsg],
+        messages: [...s.messages, msg],
         // Merge AI suggestions with default actions
         actions: msg.actions ? 
           [...s.actions.slice(0, 3), ...msg.actions] : 
@@ -148,7 +142,7 @@ function App() {
   // Update context when engine state changes
   useEffect(() => {
     if (engine) {
-      engine.state$.subscribe(engineState => {
+      engine.on('stateChange', engineState => {
         setState(s => ({
           ...s,
           context: { ...s.context, engineState }
@@ -235,9 +229,9 @@ function App() {
 
   // Handle voice responses
   useEffect(() => {
-    socket.on('voice:response', async ({ audio, text, actions }) => {
+    socket.on('voice:response', async ({ audio: audioData, text, actions }) => {
       // Play audio response
-      const audioBlob = new Blob([audio], { type: 'audio/mp3' });
+      const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
       const audioUrl = URL.createObjectURL(audioBlob);
       const audioPlayer = new Audio(audioUrl);
       await audioPlayer.play();

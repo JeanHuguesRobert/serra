@@ -39,14 +39,10 @@ export class Continuation {
                     .map(([key, value]) => `const ${key} = ${JSON.stringify(value)};`)
                     .join('\n');
                 
-                const code = `
-                    ${contextVars}
-                    const result = ${JSON.stringify(result)};
-                    const error = ${JSON.stringify(error)};
-                    ${this.continuationCode}
-                `;
-                
-                return await eval(code);
+                const contextParams = Object.keys(this.context);
+                const contextValues = contextParams.map(key => this.context[key]);
+                const fn = new Function(...contextParams, 'result', 'error', this.continuationCode);
+                return await fn(...contextValues, result, error);
             }
         } catch (executionError) {
             throw new Error(`Continuation execution failed: ${executionError.message}`);

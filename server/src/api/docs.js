@@ -31,14 +31,26 @@ router.get('/*', async (req, res) => {
       return res.status(400).send('Invalid filename');
     }
 
-    const filePath = path.join(docsDir, relativePath);
-    
-    // Security check: ensure the resolved path is within the docs directory
-    if (!filePath.startsWith(docsDir)) {
-      return res.status(403).send('Access denied');
+    let filePath = path.join(docsDir, relativePath);
+    let content;
+
+    try {
+      content = await fs.readFile(filePath, 'utf-8');
+    } catch (error) {
+      if (error.code === 'ENOENT' && relativePath.toLowerCase() === 'readme.md') {
+        // Special case: try to read README.md from project root
+        const rootReadmePath = path.join(__dirname, '..', '..', '..', 'README.md');
+        try {
+          content = await fs.readFile(rootReadmePath, 'utf-8');
+          filePath = rootReadmePath; // Update filePath for stats and etag generation
+        } catch (readError) {
+          throw error; // If root README.md also doesn't exist, throw the original error
+        }
+      } else {
+        throw error;
+      }
     }
 
-    const content = await fs.readFile(filePath, 'utf-8');
     const stats = await fs.stat(filePath);
     
     // Generate ETag based on content

@@ -6,6 +6,17 @@ export class DashboardElement extends Element {
     super(id, 'dashboard');
     this.children = new Map();
     this.children$ = new Subject();
+    this.engine = null;
+  }
+
+  setEngine(engine) {
+    this.engine = engine;
+    return this;
+  }
+
+  createElement(id, type) {
+    if (!this.engine) throw new Error('Dashboard is not attached to an engine');
+    return this.engine.modelFactory.createElement(this.id, id, type);
   }
 
   addElement(element) {

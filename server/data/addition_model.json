@@ -1,5 +1,5 @@
 {
-  "name": "Basic Addition Model",
+  "id": "Basic Addition Model",
   "version": "1.0.0",
   "model": {
     "vars": {

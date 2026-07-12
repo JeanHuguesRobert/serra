@@ -1,5 +1,11 @@
 # Serra - AI-Driven Interface System
 
+> [!WARNING]
+> **Non-working migration snapshot (July 2026).** The current `main` branch preserves an active
+> architectural rewrite for recovery and continued development. It is not a production release:
+> the client builds, but core Engine/formula and denbug tests still fail, and server migration work
+> remains incomplete. See [`WIP-MIGRATION.md`](WIP-MIGRATION.md) for the verified state.
+
 Serra is an innovative interface system where all user interactions are mediated through an AI. Rather than traditional static UI elements, the interface adapts dynamically to user intent through:
 
 - Natural language chat interactions

@@ -49,4 +49,4 @@ class AIProvider {
     }
 }
 
-module.exports = AIProvider;
+export default AIProvider;

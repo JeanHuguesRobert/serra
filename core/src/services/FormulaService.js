@@ -66,7 +66,7 @@ export class FormulaService extends EventEmitter {
     const { inputs, compute, output } = computation;
     formula.computations.set(output, {
       inputs: new Set(inputs),
-      compute: typeof compute === 'string' ? eval(compute) : compute
+      compute: typeof compute === 'string' ? new Function('return ' + compute)() : compute
     });
 
     inputs.forEach(inputId => {

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trace Domain Filters</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin-bottom: 20px; }
+        .result h3 { margin-top: 0; }
+        iframe { width: 100%; height: 300px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Trace Domain Filters</h1>
+    <div id="results"></div>
+
+    <script>
+        function matchFlags(flags, pattern) {
+            const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
+            return flags.filter(flag => regex.test(flag)).sort();
+        }
+
+        function computeOptimalFilters(allFlags, enabledFlags) {
+            const optimalFilters = new Set();
+            const remainingFlags = new Set(enabledFlags);
+
+            // Ensure all necessary parent flags are included
+            const allEnabledFlags = new Set(enabledFlags);
+            enabledFlags.forEach(flag => {
+                const parts = flag.split('.');
+                let current = '';
+                parts.forEach(part => {
+                    current = current ? `${current}.${part}` : part;
+                    allEnabledFlags.add(current);
+                });
+            });
+
+            while (remainingFlags.size > 0) {
+                let bestFilter = null;
+                let bestFilterCoverage = new Set();
+
+                for (const flag of remainingFlags) {
+                    const filterCandidates = [flag, '*'];
+
+                    for (const candidate of filterCandidates) {
+                        const coveredFlags = new Set(matchFlags(allFlags, candidate));
+                        if ([...remainingFlags].every(f => coveredFlags.has(f))) {
+                            if (!bestFilter || coveredFlags.size < bestFilterCoverage.size) {
+                                bestFilter = candidate;
+                                bestFilterCoverage = coveredFlags;
+                            }
+                        }
+                    }
+                }
+
+                if (bestFilter) {
+                    optimalFilters.add(bestFilter);
+                    for (const flag of bestFilterCoverage) {
+                        remainingFlags.delete(flag);
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            return Array.from(optimalFilters);
+        }
+
+        const traceScenarios = [
+            {
+                allFlags: [
+                    "network", "network.tcp", "network.udp",
+                    "database", "database.queries", "database.transactions",
+                    "ui", "ui.clicks", "ui.inputs",
+                    "performance", "performance.cpu", "performance.memory"
+                ],
+                enabledFlags: [
+                    "network", "network.tcp", "network.udp",
+                    "database", "database.queries", "database.transactions"
+                ]
+            },
+            {
+                allFlags: [
+                    "network", "ui", "ui.clicks", "ui.inputs",
+                    "performance", "performance.cpu", "performance.memory"
+                ],
+                enabledFlags: [
+                    "ui.clicks", "performance.cpu"
+                ]
+            },
+            {
+                allFlags: [
+                    "network", "network.tcp", "network.udp",
+                    "database", "database.queries", "database.transactions",
+                    "ui", "ui.clicks", "ui.inputs",
+                    "performance", "performance.cpu", "performance.memory"
+                ],
+                enabledFlags: [
+                    "network", "network.tcp", "network.udp",
+                    "database", "database.queries",
+                    "ui", "ui.clicks", "ui.inputs",
+                    "performance", "performance.cpu", "performance.memory"
+                ]
+            }
+        ];
+
+        const resultsContainer = document.getElementById('results');
+        traceScenarios.forEach((scenario, index) => {
+            const { allFlags, enabledFlags } = scenario;
+            const optimalFilters = computeOptimalFilters(allFlags, enabledFlags);
+
+            const resultDiv = document.createElement('div');
+            resultDiv.classList.add('result');
+            resultDiv.innerHTML = `
+                <h3>Scenario ${index + 1}</h3>
+                <p><strong>All Flags:</strong> ${allFlags.join(', ')}</p>
+                <p><strong>Enabled Flags:</strong> ${enabledFlags.join(', ')}</p>
+                <p><strong>Optimal Filters:</strong> ${optimalFilters.join(', ')}</p>
+                <h2>Scenario ${index + 1} Details</h2>
+                <p><strong>All Flags:</strong> ${allFlags.join(', ')}</p>
+                <p><strong>Enabled Flags:</strong> ${enabledFlags.join(', ')}</p>
+                <p><strong>Optimal Filters:</strong> ${optimalFilters.join(', ')}</p>
+            `;
+            resultsContainer.appendChild(resultDiv);
+        });
+    </script>
+</body>
+</html>

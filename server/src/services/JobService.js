@@ -1,15 +1,16 @@
-const { NodeWorkerJobManager } = require('@serra/core/jobs');
+import { NodeWorkerJobManager } from '@serra/core/jobs';
+import { JobSubscriptionManager } from '@serra/core/services/JobSubscriptionManager';
 
 class JobService {
     constructor() {
         this.jobManager = new NodeWorkerJobManager();
-        this.statusChangeCallbacks = new Map();
+        this.subscriptionManager = new JobSubscriptionManager();
     }
 
     createJob(config) {
         const jobId = this.jobManager.createJob(config);
         this.jobManager.subscribeToJob(jobId, (status) => {
-            this.notifyStatusChange(jobId, status);
+            this.subscriptionManager.notifyStatusChange(jobId, status);
         });
         return jobId;
     }
@@ -35,23 +36,12 @@ class JobService {
     }
 
     subscribeToJobStatus(jobId, clientId, callback) {
-        if (!this.statusChangeCallbacks.has(jobId)) {
-            this.statusChangeCallbacks.set(jobId, new Map());
-        }
-        this.statusChangeCallbacks.get(jobId).set(clientId, callback);
+        this.subscriptionManager.subscribeToJobStatus(jobId, clientId, callback);
     }
 
     unsubscribeFromJobStatus(jobId, clientId) {
-        if (this.statusChangeCallbacks.has(jobId)) {
-            this.statusChangeCallbacks.get(jobId).delete(clientId);
-        }
-    }
-
-    notifyStatusChange(jobId, status) {
-        if (this.statusChangeCallbacks.has(jobId)) {
-            this.statusChangeCallbacks.get(jobId).forEach(callback => callback(status));
-        }
+        this.subscriptionManager.unsubscribeFromJobStatus(jobId, clientId);
     }
 }
 
-module.exports = new JobService();
+export default new JobService();

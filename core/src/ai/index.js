@@ -1,9 +1,11 @@
-const AIProvider = require('./AIProvider');
-const CopilotProvider = require('./CopilotProvider');
-const TextSynthProvider = require('./TextSynthProvider');
+import AIProvider from './AIProvider.js';
+import CopilotProvider from './CopilotProvider.js';
+import TextSynthProvider from './TextSynthProvider.js';
+import AIProviderManager from './ai-providers.js';
 
-module.exports = {
+export {
     AIProvider,
     CopilotProvider,
-    TextSynthProvider
+    TextSynthProvider,
+    AIProviderManager
 };

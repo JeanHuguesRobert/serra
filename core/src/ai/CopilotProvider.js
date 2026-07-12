@@ -1,4 +1,4 @@
-const AIProvider = require('./AIProvider');
+import AIProvider from './AIProvider.js';
 
 class CopilotProvider extends AIProvider {
     constructor(config = {}) {
@@ -77,4 +77,4 @@ Suggestions:`;
     }
 }
 
-module.exports = CopilotProvider;
+export default CopilotProvider;

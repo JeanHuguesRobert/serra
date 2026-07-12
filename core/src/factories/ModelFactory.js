@@ -1,7 +1,13 @@
-import { ElementModel } from '../models/ElementModel.js';
 import { FormulaElement } from '../elements/FormulaElement.js';
 import { Element } from '../elements/Element.js';
 import { LedElement } from '../elements/LedElement.js';
+import { DashboardElement } from '../elements/DashboardElement.js';
+import { NumberElement } from '../elements/NumberElement.js';
+import { SwitchElement } from '../elements/SwitchElement.js';
+import { InputElement } from '../elements/InputElement.js';
+import { AlertElement } from '../elements/AlertElement.js';
+import { ContainerElement } from '../elements/ContainerElement.js';
+import { DisplayElement } from '../elements/DisplayElement.js';
 
 export class ModelFactory {
   constructor(engine) {
@@ -10,7 +16,7 @@ export class ModelFactory {
   }
 
   createDashboard(id) {
-    const dashboard = new ElementModel(id, 'dashboard');
+    const dashboard = new DashboardElement(id);
     dashboard.setEngine(this.engine);
     this.dashboards.set(id, dashboard);
     this.engine.elements.set(id, dashboard);
@@ -29,13 +35,47 @@ export class ModelFactory {
 
     let element;
     switch (type) {
+      
       case 'led':
         element = new LedElement(id);
         break;
+      
       case 'number':
         element = new NumberElement(id);
         break;
-      // ...other element types...
+      
+      case 'switch':
+        element = new SwitchElement(id);
+        break;
+      
+      case 'text':
+        element = new Element(id, type);
+        break;
+
+      case 'formula':
+        element = new FormulaElement(id);
+        break;
+      
+      case 'input':
+        element = new InputElement(id);
+        break;
+      
+      case 'button':
+        element = new Element(id, type);
+        break;
+      
+      case 'alert':
+        element = new AlertElement(id);
+        break;
+      
+      case 'container':
+        element = new ContainerElement(id);
+        break;
+      
+      case 'display':
+        element = new DisplayElement(id);
+        break;
+      
       default:
         // Create basic element if no specific type
         element = new Element(id, type);

@@ -1,4 +1,5 @@
 import { EventEmitter } from '../utils/EventEmitter.js';
+import { ActiveState } from '../utils/ActiveState.js';
 
 /**
  * Service to track the status of various transport connections
@@ -8,9 +9,13 @@ export class ConnectionStatusService extends EventEmitter {
     constructor() {
         super();
         this.transports = new Map();
-        this.desiredStatus = 'up';
-        this.actualStatus = 'down';
+        this.connectionState = new ActiveState('down');
         this.activeTransport = null;
+
+        // Forward state changes to statusChange event
+        this.connectionState.subscribe((newValue, oldValue) => {
+            this.emit('statusChange', this.getConnectionState());
+        });
     }
 
     /**
@@ -50,10 +55,7 @@ export class ConnectionStatusService extends EventEmitter {
         const newStatus = connectedTransport ? 'up' : 'down';
         this.activeTransport = connectedTransport ? connectedTransport[0] : null;
         
-        if (this.actualStatus !== newStatus) {
-            this.actualStatus = newStatus;
-            this.emit('statusChange', this.getConnectionState());
-        }
+        this.connectionState.set(newStatus);
     }
 
     /**
@@ -61,10 +63,7 @@ export class ConnectionStatusService extends EventEmitter {
      * @param {string} status - Desired status ('up' or 'down')
      */
     setDesiredStatus(status) {
-        if (this.desiredStatus !== status) {
-            this.desiredStatus = status;
-            this.emit('statusChange', this.getConnectionState());
-        }
+        this.connectionState.expect(status);
     }
 
     /**
@@ -81,13 +80,14 @@ export class ConnectionStatusService extends EventEmitter {
         });
 
         return {
-            desired: this.desiredStatus,
-            actual: this.actualStatus,
+            desired: this.connectionState.desired(),
+            actual: this.connectionState.current(),
             activeTransport: this.activeTransport,
             transports: transportStates,
-            isConnecting: this.desiredStatus === 'up' && this.actualStatus === 'down',
-            isConnected: this.actualStatus === 'up',
-            isDisconnected: this.actualStatus === 'down'
+            isConnecting: !this.connectionState.stable() && this.connectionState.desired() === 'up',
+            isConnected: this.connectionState.current() === 'up',
+            isDisconnecting: !this.connectionState.stable() && this.connectionState.desired() === 'down',
+            isDisconnected: this.connectionState.current() === 'down'
         };
     }
 }

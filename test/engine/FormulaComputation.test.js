@@ -6,12 +6,6 @@ describe('Formula Computation', () => {
   let a, b, c, x, y, formula0, formula1, formula2;
 
   beforeEach(() => {
-    // Clean up any existing formulas and reset engine
-    if (formula0) formula0.dispose();
-    if (formula1) formula1.dispose();
-    if (formula2) formula2.dispose();
-    if (engine) engine.stop();
-
     engine = new Engine();
     dashboard = engine.createDashboard('test-dashboard');
     engine.setCurrentDashboard('test-dashboard');
@@ -74,6 +68,11 @@ describe('Formula Computation', () => {
     c.setValueWithoutTrigger(0);
   });
 
+  afterEach(() => {
+    engine?.stop();
+    Engine.instance = null;
+  });
+
   describe('smoke test, A = B', () => {
     test('should verify initial values before computation', () => {
       expect(a.getValue()).toBe(0);
@@ -115,9 +114,6 @@ describe('Formula Computation', () => {
   });
 
   afterEach(() => {
-    // Clean up subscriptions
-    formula0.dispose();
-    formula1.dispose();
-    formula2.dispose();
+    engine.stop();
   });
 });

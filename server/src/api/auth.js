@@ -1,5 +1,5 @@
 import express from 'express';
-import { authService } from '../services/authService.js';
+import { serverAuthService } from '../../../core/src/services/ServerAuthService.js';
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.get('/login', (req, res) => {
 router.post('/callback', async (req, res) => {
     try {
         const { code } = req.body;
-        const authResult = await authService.authenticateGitHub(code);
+        const authResult = await serverAuthService.authenticateGitHub(code);
         res.json(authResult);
     } catch (error) {
         res.status(401).json({ error: error.message });
@@ -37,7 +37,7 @@ router.post('/callback', async (req, res) => {
  * @desc    Logout user
  * @access  Private
  */
-router.post('/logout', authService.authenticateRequest.bind(authService), (req, res) => {
+router.post('/logout', serverAuthService.authenticateRequest.bind(serverAuthService), (req, res) => {
     // In a real application, you might want to invalidate the token on the server side
     // For now, we'll just send a success response - the client will remove the token
     res.json({ message: 'Logged out successfully' });
@@ -48,7 +48,7 @@ router.post('/logout', authService.authenticateRequest.bind(authService), (req, 
  * @desc    Get current user info
  * @access  Private
  */
-router.get('/user', authService.authenticateRequest.bind(authService), (req, res) => {
+router.get('/user', serverAuthService.authenticateRequest.bind(serverAuthService), (req, res) => {
     res.json({ user: req.user });
 });
 

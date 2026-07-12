@@ -1,4 +1,4 @@
-const AIProvider = require('./AIProvider');
+import AIProvider from './AIProvider.js';
 
 class TextSynthProvider extends AIProvider {
     constructor(config = {}) {
@@ -72,4 +72,4 @@ class TextSynthProvider extends AIProvider {
     }
 }
 
-module.exports = TextSynthProvider;
+export default TextSynthProvider;

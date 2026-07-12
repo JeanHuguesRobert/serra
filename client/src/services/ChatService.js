@@ -1,19 +1,32 @@
 import { ChatService } from '@serra/core';
-import { SocketCore } from './core/SocketCore';
+import { useSocket } from '../contexts/SocketContext';
 
 class BrowserChatService extends ChatService {
   constructor(config = {}) {
     super();
-    this.socket = new SocketCore(config);
+    this.transport = null;
+    this.aiProvider = config.aiProvider || 'default';
+    this.debug = true;
+    this.messageHistory = [];
   }
 
-  async connect() {
-    await this.socket.connect();
+  async initialize(transport) {
+    this.transport = transport;
+    
+    this.transport.on('message', (message) => {
+      if (message.protocol === 'serra' && message.type === 'chat') {
+        this._addToHistory({
+          ...message.data,
+          direction: 'incoming'
+        });
+        this.emit('message', message.data);
+      }
+    });
   }
 
   async sendMessage(message, systemPrompt = '') {
-    if (!this.socket.isConnected()) {
-      throw new Error('Socket not connected');
+    if (!this.transport || !this.transport.isConnected()) {
+      throw new Error('Transport not connected');
     }
 
     const messagePayload = {
@@ -27,37 +40,49 @@ class BrowserChatService extends ChatService {
       direction: 'outgoing'
     });
 
-    return new Promise((resolve, reject) => {
-      this.socket.emit('message', messagePayload, (response) => {
-        if (response.error) {
-          reject(response.error);
-        } else {
-          this._addToHistory({
-            ...response,
-            direction: 'incoming'
-          });
-          
-          this.emit('message', response);
-          resolve(response);
-        }
-      });
+    await this.transport.send({
+      type: 'chat',
+      data: messagePayload
+    }, {
+      protocol: 'serra'
     });
   }
 
-  setupListeners() {
-    this.socket.on('message', (message) => {
-      this._addToHistory({
-        ...message,
-        direction: 'incoming'
-      });
-      
-      this.emit('message', message);
-    });
+  getHistory(limit = 50) {
+    return this.messageHistory.slice(-limit);
   }
 
-  disconnect() {
-    this.socket.disconnect();
+  clearHistory() {
+    this.messageHistory = [];
+  }
+
+  _addToHistory(message) {
+    this.messageHistory.push({
+      ...message,
+      timestamp: Date.now()
+    });
+
+    // Keep history size reasonable
+    if (this.messageHistory.length > 100) {
+      this.messageHistory.shift();
+    }
   }
 }
 
-export default new BrowserChatService();
+// Create singleton instance
+const chatService = new BrowserChatService();
+
+// Hook to initialize chat service with socket from context
+export const useChatService = () => {
+  const { transport } = useSocket();
+  
+  React.useEffect(() => {
+    if (transport) {
+      chatService.initialize(transport);
+    }
+  }, [transport]);
+
+  return chatService;
+};
+
+export default chatService;

@@ -1,39 +1,81 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { setDashboard } from '../store/dashboardSlice';
+import { Box, Button, Menu, MenuItem } from '@mui/material';
+import { useEngine } from '../contexts/EngineContext';
 import DashboardService from '../services/DashboardService';
 import Dashboard from './Dashboard';
 
-function DashboardManager({ initialDashboard }) {
-  const dispatch = useDispatch();
-  const currentDashboard = useSelector(state => state.dashboard.current);
-  const [isInitialized, setIsInitialized] = useState(false);
+function DashboardManager() {
+  const { engine } = useEngine();
+  const [currentDashboard, setCurrentDashboard] = useState(null);
+  const [availableDashboards, setAvailableDashboards] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  useEffect(() => {
-    if (initialDashboard) {
-      dispatch(setDashboard(initialDashboard));
-      setIsInitialized(true);
-    }
-  }, [initialDashboard, dispatch]);
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDashboardSelect = (dashboardId) => {
+    DashboardService.requestDashboard(dashboardId);
+    handleMenuClose();
+  };
 
   useEffect(() => {
     const unsubscribe = DashboardService.subscribe((event, data) => {
-      dispatch(setDashboard(data));
-      if (event === 'response') {
-        setIsInitialized(true);
+      if (event === 'refresh' || event === 'response') {
+        setCurrentDashboard(data);
+        if (engine) {
+          engine.setCurrentDashboard(data.id);
+        }
       }
     });
 
-    if (!isInitialized) {
-      DashboardService.requestDashboard('first');
-    }
+    // Load the 'first' dashboard by default
+    DashboardService.requestDashboard('first');
+
+    // Get list of available dashboards
+    fetch('http://localhost:5000/api/dashboards')
+      .then(response => response.json())
+      .then(data => setAvailableDashboards(data))
+      .catch(error => console.error('Error loading dashboards:', error));
 
     return () => {
       unsubscribe();
     };
-  }, [dispatch, isInitialized, currentDashboard?.id]);
+  }, [engine]);
 
-  return <Dashboard dashboard={currentDashboard} />;
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+        <Button
+          variant="outlined"
+          onClick={handleMenuClick}
+          size="small"
+        >
+          Select Dashboard
+        </Button>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          {availableDashboards.map(dashboard => (
+            <MenuItem
+              key={dashboard.id}
+              onClick={() => handleDashboardSelect(dashboard.id)}
+              selected={currentDashboard?.id === dashboard.id}
+            >
+              {dashboard.title || dashboard.id}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Box>
+      <Dashboard dashboard={currentDashboard} />
+    </Box>
+  );
 }
 
 export default DashboardManager;

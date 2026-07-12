@@ -90,9 +90,8 @@ class AIService extends EventEmitter {
           }
         }
 
-        // Handle intent analysis based on provider
-        const provider = message?.provider || 'copilot';
-        const response = await this.processIntent(text, context, provider);
+        // I (GitHub Copilot) handle intent analysis
+        const response = await this.processIntent(text, context);
 
         // If voice response requested, generate speech
         if (message.type === 'voice' && response?.text) {

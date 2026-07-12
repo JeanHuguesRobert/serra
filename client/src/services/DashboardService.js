@@ -1,15 +1,27 @@
-import { socket } from '../socket';
+
 
 class DashboardService {
   constructor() {
     this.listeners = new Map();
     this.currentDashboard = null;
-    this.setupSocketListeners();
   }
 
-  setupSocketListeners() {
-    socket.on('dashboard-refresh', this.handleDashboardRefresh.bind(this));
-    socket.on('dashboard-response', this.handleDashboardResponse.bind(this));
+  requestDashboard(id) {
+    return fetch(`/api/dashboards/${id}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dashboard: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        this.handleDashboardResponse(data);
+        return data;
+      })
+      .catch(error => {
+        console.error('Error fetching dashboard:', error);
+        throw error;
+      });
   }
 
   handleDashboardRefresh(data) {
@@ -21,10 +33,6 @@ class DashboardService {
   handleDashboardResponse(data) {
     this.currentDashboard = data;
     this.notifyListeners('response', data);
-  }
-
-  requestDashboard(id = 'first') {
-    socket.emit('request-dashboard', id);
   }
 
   getCurrentDashboard() {
@@ -52,8 +60,6 @@ class DashboardService {
   }
 
   cleanup() {
-    socket.off('dashboard-refresh', this.handleDashboardRefresh);
-    socket.off('dashboard-response', this.handleDashboardResponse);
     this.listeners.clear();
   }
 }

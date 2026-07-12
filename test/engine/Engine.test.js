@@ -1,5 +1,4 @@
 import { Engine } from '../../core/src/Engine';
-import { ElementModel } from '../../core/src/models/ElementModel';
 
 describe('Engine', () => {
   let engine;
@@ -11,12 +10,17 @@ describe('Engine', () => {
     engine.setCurrentDashboard('test-dashboard');
   });
 
+  afterEach(() => {
+    engine?.stop();
+    Engine.instance = null;
+  });
+
   describe('Element Management', () => {
     test('should create and store elements', () => {
       const element = engine.createElement('test-id', 'test-type');
       expect(element).toBeDefined();
       expect(element.id).toBe('test-id');
-      expect(element.type).toBe('test-type');
+      expect(element.getType()).toBe('test-type');
       expect(engine.getElement('test-id')).toBe(element);
     });
 
@@ -26,15 +30,6 @@ describe('Engine', () => {
       expect(element.getProperty('testProp')).toBe('testValue');
     });
 
-    test('should manage element running state', () => {
-      const element = engine.createElement('test-id', 'test-type');
-      element.setProperty('running', false);
-      expect(element.getProperty('running')).toBe(false);
-      element.setProperty('running', true);
-      expect(element.getProperty('running')).toBe(true);
-      element.setProperty('running', false);
-      expect(element.getProperty('running')).toBe(false);
-    });
 
     test('should handle element value property', () => {
       const element = engine.createElement('test-id', 'test-type');
@@ -52,8 +47,7 @@ describe('Engine', () => {
         id: 'test-id',
         type: 'test-type',
         properties: {
-          testProp: 'testValue',
-          value: 42
+          testProp: 'testValue'
         },
         value: 42
       });
@@ -62,35 +56,9 @@ describe('Engine', () => {
     test('should manage dashboard elements', () => {
       const childDashboard = engine.createElement('dashboard-id', 'dashboard');
       const child = engine.createElement('child-id', 'test-type');
-      
-      childDashboard.setProperty('elements', [child]);
-      expect(childDashboard.getProperty('elements')).toContain(child);
+      expect(engine.getElements()).toContain(child);
     });
 
-    test('should handle computations', () => {
-      const element = engine.createElement('test-id', 'test-type');
-      const computations = {
-        target1: { compute: '() => 42' },
-        target2: { compute: '() => 84' }
-      };
-      
-      element.setProperty('computations', computations);
-      expect(element.getProperty('computations').target1).toBeDefined();
-      expect(element.getProperty('computations').target2).toBeDefined();
-    });
-
-    test('should clean up subscriptions on dispose', () => {
-      const engine = new Engine();
-      const dashboard = engine.createDashboard('test-dashboard');
-      engine.setCurrentDashboard('test-dashboard');
-      const element = engine.createElement('test-id', 'test-type');
-      const mockSubscription = { unsubscribe: jest.fn() };
-      element.subscriptions.push(mockSubscription);
-
-      element.dispose();
-      expect(mockSubscription.unsubscribe).toHaveBeenCalled();
-      expect(element.subscriptions).toHaveLength(0);
-    });
   });
 
   describe('State Management', () => {

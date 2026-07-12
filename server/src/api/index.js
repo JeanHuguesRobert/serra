@@ -1,108 +1,91 @@
-const express = require('express');
-const router = express.Router();
-const { AIService } = require('../../services/aiService');
+import express from 'express';
+import cors from 'cors';
+import http from 'http';
+import path from 'path';
+import { Server } from 'socket.io';
+import routes from './routes';
+import { setupWebRTCHandlers } from '../services/WebRTCService';
 
-const aiServiceInstance = new AIService();
+const app = express();
+const server = http.createServer(app);
 
-// Mock socket for REST API to reuse AIService
-class MockSocket {
-  constructor(res) {
-    this.res = res;
-    this.messages = [];
-    this.updates = [];
+// Configure CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://serra.vercel.app'] 
+    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
+
+// Parse JSON payloads
+app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// API routes
+app.use('/api', routes);
+
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://serra.vercel.app']
+      : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
+});
 
-  emit(event, data) {
-    switch(event) {
-      case 'chat-message':
-        this.messages.push(data);
-        break;
-      case 'dashboard-update':
-      case 'request-dashboard':
-      case 'create-dashboard':
-      case 'delete-dashboard':
-        this.updates.push({ event, data });
-        break;
-    }
-  }
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  setupWebRTCHandlers(io, socket);
 
-  getResponse() {
-    return {
-      messages: this.messages,
-      updates: this.updates
-    };
-  }
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Development server fallback
+if (process.env.NODE_ENV !== 'production') {
+  app.use(express.static('client/dist'));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../../../client/dist/index.html'));
+  });
 }
 
-// Process command endpoint
-router.post('/command', async (req, res) => {
-  try {
-    const { text } = req.body;
-    if (!text) {
-      return res.status(400).json({ error: 'Command text is required' });
-    }
+export { app, server, io };
 
-    const mockSocket = new MockSocket(res);
-    await aiServiceInstance.processMessage({ text }, mockSocket);
-    res.json(mockSocket.getResponse());
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+/*
+Instructions:
 
-// Get pending responses
-router.get('/responses/pending', (req, res) => {
-  try {
-    const pendingResponses = Array.from(aiServiceInstance.pendingResponses.keys());
-    res.json({ pendingResponses });
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+1. Server Setup
+   - Express application initialization
+   - HTTP server creation
+   - Socket.IO integration
 
-// Provide response for a specific trace ID
-router.post('/responses/:traceId', (req, res) => {
-  try {
-    const { traceId } = req.params;
-    const { response } = req.body;
+2. Middleware Configuration
+   - CORS setup for both HTTP and WebSocket
+   - JSON body parsing
+   - Static file serving in development
 
-    if (!response) {
-      return res.status(400).json({ error: 'Response content is required' });
-    }
+3. API Routes
+   - Health check endpoint (/health)
+   - API routes mounted at /api
+   - Development fallback route
 
-    const success = aiServiceInstance.provideResponse(traceId, response);
-    if (success) {
-      res.json({ message: 'Response provided successfully' });
-    } else {
-      res.status(404).json({ error: 'No pending response found for the given trace ID' });
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+4. WebSocket Handling
+   - Socket.IO connection events
+   - WebRTC signaling setup
+   - Disconnect handling
 
-// Provide response for the last question
-router.post('/responses/last', (req, res) => {
-  try {
-    const { response } = req.body;
+5. Environment Configuration
+   - Production vs Development settings
+   - CORS origins based on environment
+   - Static file serving in development
 
-    if (!response) {
-      return res.status(400).json({ error: 'Response content is required' });
-    }
-
-    const success = aiServiceInstance.provideResponse(null, response);
-    if (success) {
-      res.json({ message: 'Response provided successfully' });
-    } else {
-      res.status(404).json({ error: 'No pending questions to respond to' });
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-module.exports = router;
+*/
