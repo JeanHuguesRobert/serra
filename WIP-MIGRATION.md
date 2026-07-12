@@ -14,17 +14,15 @@ work can be recovered, inspected and continued; it must not be represented as pr
 ## Current verification
 
 - Client production build: passes (`npm run build --workspace client`).
-- Core and server entry-point imports: partially repaired; further systematic verification needed.
-- Jest suite: failing.
+- Core and server-gateway entry-point imports: pass.
+- Jest suite: passes (44 tests).
 - Production deployment: not attempted and not authorized by this snapshot.
 
-## Known failures
+## Remaining limits
 
-- Formula elements do not yet implement the engine attachment contract expected by `ModelFactory`.
-- Engine test isolation cascades after failed setup because the singleton remains active.
-- Dashboard membership serialization differs from existing test expectations.
-- Denbug internal/system traces and flag initialization differ from the new test contract.
-- Remaining server and protocol imports require migration review.
+- The passing unit suite and client build do not constitute end-to-end server validation.
+- Production deployment, persistence, authentication and external-service integration remain unverified.
+- The migration still needs bounded server smoke tests before any operational claim.
 
 ## Intended replacement direction
 
@@ -34,9 +32,7 @@ abstractions. Deleted files and new files belong to that migration and should be
 
 ## Safe continuation
 
-1. Restore green Engine and formula tests.
-2. Reconcile denbug behavior with its tests.
-3. Verify every ESM import from core and server entry points.
-4. Run the complete Jest suite.
-5. Rebuild the client.
-6. Add a bounded server smoke test before any deployment claim.
+1. Add a bounded server smoke test.
+2. Verify persistence, authentication and external-service boundaries.
+3. Exercise an end-to-end dashboard workflow.
+4. Define deployment and rollback procedures before any production trial.
