@@ -9,6 +9,7 @@ visibility: public
 
 ## Operational documentation
 
+- [Active migration snapshot](../WIP-MIGRATION.md)
 - [API reference](../docs/API.md)
 - [Architecture](../docs/ARCHITECTURE.md)
 - [Authentication guide](../docs/AUTH.md)

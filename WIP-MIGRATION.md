@@ -1,3 +1,11 @@
+---
+title: "Serra migration snapshot — July 2026"
+document_role: operational
+document_kind: migration-status
+status: active-wip
+visibility: public
+---
+
 # Serra migration snapshot — July 2026
 
 This commit is a deliberate backup of an unfinished architectural migration. It is published so the
