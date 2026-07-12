@@ -47,6 +47,7 @@ describe('Engine', () => {
         id: 'test-id',
         type: 'test-type',
         properties: {
+          dashboard: 'test-dashboard',
           testProp: 'testValue'
         },
         value: 42

@@ -2,6 +2,13 @@ import { BehaviorSubject, Subject, map } from 'rxjs';
 import { ModelFactory } from './factories/ModelFactory.js';
 import { EventEmitter } from 'events';
 
+function evaluateComputation(computation, inputValues) {
+  const fn = typeof computation.compute === 'function'
+    ? computation.compute
+    : new Function(`return (${computation.compute});`)();
+  return fn(...inputValues);
+}
+
 /**
  * Core Engine class that manages all elements and their interactions.
  * Uses the Singleton pattern to ensure only one engine instance exists.
@@ -130,6 +137,14 @@ export class Engine extends EventEmitter {
       }
     }
   }
+
+  handleElementValueChange(element, value) {
+    this.updates$.next({ id: element.id, property: 'value', value });
+    if (!this.processingComputations) {
+      this.processComputations(element.id, value);
+    }
+    this.updateState();
+  }
   
   updateState() {
     const state = {
@@ -171,8 +186,7 @@ export class Engine extends EventEmitter {
               if (computation.inputs.includes(update.id) && update.property === 'value') {
                 const inputs = computation.inputs.map(id => this.getElement(id)?.getValue());
                 if (inputs.every(input => input !== undefined)) {
-                  const fn = new Function(...computation.inputs, computation.compute);
-                  const result = fn(...inputs);
+                  const result = evaluateComputation(computation, inputs);
                   if (targetElement.getValue() !== result) {
                     targetElement.setValue(result);
                   }
@@ -207,8 +221,7 @@ export class Engine extends EventEmitter {
                 if (targetElement) {
                   const inputs = computation.inputs.map(inputId => this.getElement(inputId)?.getValue());
                   if (inputs.every(input => input !== undefined)) {
-                    const fn = new Function(...computation.inputs, computation.compute);
-                    const result = fn(...inputs);
+                    const result = evaluateComputation(computation, inputs);
                     if (targetElement.getValue() !== result) {
                       targetElement.setValue(result);
                       processed.add(target);

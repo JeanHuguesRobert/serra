@@ -30,6 +30,12 @@ export class Element extends EventEmitter {
     // Computation support
     this.computations = new Map();
     this.subscriptions = [];
+    this.engine = null;
+  }
+
+  setEngine(engine) {
+    this.engine = engine;
+    return this;
   }
 
   /**
@@ -57,7 +63,12 @@ export class Element extends EventEmitter {
     
     if (oldValue !== value) {
       this.emit('value', value);
+      this.engine?.handleElementValueChange(this, value);
     }
+  }
+
+  setValueWithoutTrigger(value) {
+    this._value = value;
   }
 
   /**

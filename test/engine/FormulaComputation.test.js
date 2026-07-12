@@ -68,11 +68,6 @@ describe('Formula Computation', () => {
     c.setValueWithoutTrigger(0);
   });
 
-  afterEach(() => {
-    engine?.stop();
-    Engine.instance = null;
-  });
-
   describe('smoke test, A = B', () => {
     test('should verify initial values before computation', () => {
       expect(a.getValue()).toBe(0);
@@ -114,6 +109,7 @@ describe('Formula Computation', () => {
   });
 
   afterEach(() => {
-    engine.stop();
+    if (Engine.instance === engine) engine.stop();
+    Engine.instance = null;
   });
 });

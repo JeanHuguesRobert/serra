@@ -72,11 +72,6 @@ function createDomain(name) {
             effectiveEnabled: parentEffective && true
         });
 
-        const message = name.endsWith(':echo') 
-            ? `Echo domain created: ${name}` 
-            : `Domain created: ${name}`;
-        addTrace('system', [message]);
-
         if (!name.endsWith(':echo')) {
             createDomain(`${name}:echo`);
         }
@@ -740,6 +735,7 @@ const denbug = {
         allDomains.clear();
         traceLog.length = 0;
         subscribers.clear();
+        for (const name of Object.keys(cachedTracer)) delete cachedTracer[name];
     },
     // New contracts control function.
     setContractsEnabled,

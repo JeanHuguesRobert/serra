@@ -36,7 +36,9 @@ describe('denbug', () => {
         const debugFn = denbug.domain('test');
         
         debugFn('message');
-        expect(console.log).toHaveBeenCalled();
+        expect(denbug.traces()).toEqual(expect.arrayContaining([
+            expect.objectContaining({ domain: 'test', args: ['message'] })
+        ]));
     });
 
     test('should not log messages when domain is disabled', () => {

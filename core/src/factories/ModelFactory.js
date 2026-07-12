@@ -81,6 +81,7 @@ export class ModelFactory {
         element = new Element(id, type);
     }
 
+    element.setEngine(this.engine);
     this.engine.elements.set(id, element);
     dashboard.addElement(element);
     return element;

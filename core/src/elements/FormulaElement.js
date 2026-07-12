@@ -27,6 +27,22 @@ export class FormulaElement extends Element {
     this._error = null;              // Last computation error
   }
 
+  addComputations(computations = {}) {
+    Object.entries(computations).forEach(([target, computation]) => {
+      if (!Array.isArray(computation?.inputs)) {
+        throw new Error(`Computation ${target} requires an inputs array`);
+      }
+      if (typeof computation.compute !== 'string' && typeof computation.compute !== 'function') {
+        throw new Error(`Computation ${target} requires a compute function or expression`);
+      }
+      this.computations.set(target, {
+        inputs: [...computation.inputs],
+        compute: computation.compute
+      });
+    });
+    return this;
+  }
+
   /**
    * Sets the computation expression and input dependencies
    * @param {string} expression - JavaScript expression to evaluate
