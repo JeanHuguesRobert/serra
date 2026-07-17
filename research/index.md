@@ -3,6 +3,18 @@ title: Serra Research Index
 document_role: index
 status: working-paper
 visibility: public
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Serra Research Index
