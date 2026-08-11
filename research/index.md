@@ -15,6 +15,10 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: cogentia.js
+classification_version: "1"
+classification_rule: research-index
+classification_confidence: strong
 ---
 
 # Serra Research Index

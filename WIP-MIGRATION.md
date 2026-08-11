@@ -4,6 +4,11 @@ document_role: operational
 document_kind: migration-status
 status: active-wip
 visibility: public
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Serra migration snapshot — July 2026

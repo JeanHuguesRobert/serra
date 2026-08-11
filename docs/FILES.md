@@ -4,10 +4,15 @@ description: "Public, sanitized map of the Serra repository structure."
 date: 2026-07-07
 last_modified_at: 2026-07-07
 license: MIT
-document_role: "reference"
+document_role: "operational"
 document_kind: "repository-map"
 visibility: "public"
 lifecycle_state: "draft"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "reference"
 ---
 
 # Serra repository map

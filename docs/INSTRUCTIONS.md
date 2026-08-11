@@ -8,6 +8,10 @@ document_role: "operational"
 document_kind: "agent-instructions"
 visibility: "public_candidate"
 lifecycle_state: "draft"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Serra agent instructions
