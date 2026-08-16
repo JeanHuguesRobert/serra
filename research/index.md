@@ -1,8 +1,10 @@
 ---
 title: Serra Research Index
 document_role: index
+document_kind: research-index
 status: working-paper
 visibility: public
+lifecycle_state: working
 author: unknown
 date: unknown
 provenance:
