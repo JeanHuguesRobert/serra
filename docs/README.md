@@ -26,3 +26,21 @@ update_policy: UP-DEFAULT-REVIEWED
 The public corpus entry point is [public-corpus.md](public-corpus.md).
 
 For the main project overview, see [../README.md](../README.md).
+
+## Documents in this directory
+<!-- BEGIN_AUTO: readme_index -->
+- [Authentication Guide](AUTH.md)
+- [Elements](ELEMENTS.md)
+- [Formula Computation System](FORMULA.md)
+- [Serra agent instructions](INSTRUCTIONS.md)
+- [Serra API reference](API.md)
+- [Serra Architecture](ARCHITECTURE.md)
+- [Serra CLI reference](CLI.md)
+- [Serra MCP boundary](MCP.md)
+- [Serra network boundary](NETWORK.md)
+- [Serra project rules](RULES.md)
+- [Serra public corpus guide](public-corpus.md)
+- [Serra repository map](FILES.md)
+- [Serra roadmap](ROADMAP.md)
+- [Serra TODO](TODO.md)
+<!-- END_AUTO: readme_index -->
