@@ -19,11 +19,15 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
+status: working-paper
 ---
+
 
 # Serra Documentation
 

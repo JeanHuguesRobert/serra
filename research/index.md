@@ -6,7 +6,7 @@ status: working-paper
 visibility: public
 lifecycle_state: working
 author: unknown
-date: unknown
+date: null
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -18,10 +18,14 @@ review:
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
 classification_source: cogentia.js
-classification_version: "1"
+classification_version: '1'
 classification_rule: research-index
 classification_confidence: strong
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
 ---
+
 
 # Serra Research Index
 

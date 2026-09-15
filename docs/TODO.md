@@ -1,14 +1,28 @@
 ---
-title: "Serra TODO"
-description: "Public working TODO for Serra stabilization and corpus integration."
-date: 2026-07-07
-last_modified_at: 2026-07-07
+title: Serra TODO
+description: Public working TODO for Serra stabilization and corpus integration.
+date: 2026-07-07T00:00:00.000Z
+last_modified_at: 2026-07-07T00:00:00.000Z
 license: MIT
-document_role: "operational"
-document_kind: "todo"
-visibility: "public_candidate"
-lifecycle_state: "draft"
+document_role: operational
+document_kind: todo
+visibility: public_candidate
+lifecycle_state: draft
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+status: working-paper
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Serra TODO
 
