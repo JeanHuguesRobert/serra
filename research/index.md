@@ -46,3 +46,17 @@ language: en
 - [Roadmap](../docs/ROADMAP.md)
 - [Project rules](../docs/RULES.md)
 - [Dashboard system knowledge](../knowledge.md)
+
+<!-- BEGIN_AUTO: index_catalog -->
+## Corpus catalog
+
+*Generated navigation. Editorial sections above remain human-maintained.*
+
+| Document | Role | Updated |
+|---|---|---|
+| [Prepare Serra for Cogentia corpus integration](../.cogentia/issues/jeanhuguesrobert-serra/issue-00008.md) | source | unknown |
+| [Serra - AI-Driven Interface System](../README.md) | source | 2026-07-12 |
+| [serra agent mandate](../AGENTS.md) | operational | 2026-08-03 |
+| [Serra Documentation](../docs/README.md) | operational | 2026-07-08 |
+
+<!-- END_AUTO: index_catalog -->
